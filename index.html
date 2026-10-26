@@ -7,16 +7,44 @@
 <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-[#0b0b0f] text-white min-h-screen font-sans p-4 md:p-6">
-<div class="max-w-6xl mx-auto">
 
-  <div class="bg-gradient-to-r from-[#181824] to-[#25183d] border border-[#7a28ff]/60 p-5 rounded-2xl mb-5 flex justify-between items-center">
+<!-- หน้าล็อกอิน -->
+<div id="login-screen" class="max-w-sm mx-auto mt-20 bg-[#14141d] border border-purple-900/50 rounded-2xl p-6">
+  <h1 class="text-xl font-extrabold text-center mb-1 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">🛡️ XENOVA KEY PANEL</h1>
+  <p class="text-xs text-gray-500 text-center mb-5">เข้าสู่ระบบด้วยบัญชีของคุณ</p>
+  <input id="l-user" placeholder="ชื่อผู้ใช้ (owner สำหรับเจ้าของระบบ)" class="w-full bg-[#0c0c10] border border-gray-700 rounded-xl px-4 py-3 text-sm mb-3">
+  <input id="l-pass" type="password" placeholder="รหัสผ่าน" class="w-full bg-[#0c0c10] border border-gray-700 rounded-xl px-4 py-3 text-sm mb-3">
+  <button id="l-btn" class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 font-bold py-3 rounded-xl text-sm">เข้าสู่ระบบ</button>
+  <p id="l-err" class="text-red-400 text-xs text-center mt-3"></p>
+  <p class="text-xs text-gray-600 text-center mt-4">เจ้าของระบบใช้ชื่อ <b>owner</b> กับรหัสผ่านที่ตั้งไว้ใน Netlify (ADMIN_PASSWORD) ล็อกอินครั้งแรกได้เลย บัญชีอื่นต้องให้เจ้าของระบบสร้างให้</p>
+</div>
+
+<!-- แอปหลัก -->
+<div id="app" class="max-w-6xl mx-auto hidden">
+
+  <div class="bg-gradient-to-r from-[#181824] to-[#25183d] border border-[#7a28ff]/60 p-5 rounded-2xl mb-5 flex justify-between items-center flex-wrap gap-2">
     <h1 class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">🛡️ XENOVA KEY PANEL</h1>
     <div class="text-right text-xs">
       <div class="text-green-400 font-bold">🟢 ออนไลน์ตอนนี้: <span id="st-online">0</span> คน</div>
       <div class="text-gray-400">คีย์ทั้งหมด: <span id="st-keys">0</span></div>
+      <div class="text-purple-300 mt-1">👤 <span id="me-name"></span> <span id="me-role" class="px-1.5 py-0.5 rounded bg-purple-900/60 text-[10px]"></span> <button id="logout-btn" class="text-gray-400 underline ml-1">ออกจากระบบ</button></div>
     </div>
   </div>
 
+  <!-- จัดการผู้ใช้เว็บ (เฉพาะ owner) -->
+  <div id="owner-panel" class="hidden bg-[#14141d] border border-yellow-900/50 p-5 rounded-2xl mb-5">
+    <h2 class="text-lg font-bold mb-3">👑 จัดการบัญชีผู้ใช้เว็บ (เฉพาะเจ้าของระบบเห็น)</h2>
+    <div class="flex flex-wrap gap-2 mb-3">
+      <input id="u-name" placeholder="ชื่อผู้ใช้ใหม่" class="flex-1 min-w-[140px] bg-[#0c0c10] border border-gray-700 rounded-lg px-3 py-2 text-sm">
+      <input id="u-pass" placeholder="รหัสผ่าน (อย่างน้อย 4 ตัว)" class="flex-1 min-w-[140px] bg-[#0c0c10] border border-gray-700 rounded-lg px-3 py-2 text-sm">
+      <button id="u-create" class="bg-yellow-700 px-4 py-2 rounded-lg text-sm font-bold">➕ สร้างบัญชี</button>
+    </div>
+    <div class="overflow-x-auto"><table class="w-full text-left text-sm">
+      <thead><tr class="border-b border-gray-800 text-gray-400 text-xs"><th class="py-2 px-2">ชื่อผู้ใช้</th><th class="px-2">สิทธิ์</th><th class="px-2">สร้างเมื่อ</th><th class="px-2 text-center">จัดการ</th></tr></thead>
+      <tbody id="u-list"></tbody></table></div>
+  </div>
+
+  <!-- สร้างคีย์ -->
   <div class="bg-[#14141d] border border-gray-800 p-5 rounded-2xl mb-5 grid grid-cols-1 md:grid-cols-3 gap-4">
     <div>
       <label class="block text-xs font-semibold text-purple-300 mb-2">1. จำนวนคนใช้สูงสุดต่อคีย์</label>
@@ -43,42 +71,177 @@
       <label class="block text-xs font-semibold text-purple-300 mb-2">3. วางสคริปต์หลัก (Lua) — เก็บบนเซิร์ฟเวอร์ ส่งให้เฉพาะคนที่คีย์ผ่าน</label>
       <textarea id="script" rows="4" placeholder="print('Hello')" class="w-full bg-[#0c0c10] border border-gray-700 rounded-xl p-4 text-sm font-mono text-purple-300"></textarea>
     </div>
+    <div class="md:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-4 bg-[#0c0c10] border border-purple-900/50 rounded-xl p-4">
+      <label class="flex items-center gap-2 text-sm"><input id="protect" type="checkbox" checked> 🛡️ ป้องกันหลายชั้น (เข้ารหัส 3 ชั้น + ตรวจจับ hook 4 จุด)</label>
+      <label class="flex items-center gap-2 text-sm"><input id="kick" type="checkbox" checked> 🚪 เตะออกจากเกมเมื่อโดนจับได้</label>
+      <div class="flex gap-2">
+        <input id="sound" placeholder="Sound ID เสียงเตือน (ไม่ใส่ก็ได้)" class="flex-1 bg-[#14141d] border border-gray-700 rounded-lg px-3 py-2 text-sm">
+        <button id="sound-test" type="button" class="bg-gray-700 px-3 py-2 rounded-lg text-xs whitespace-nowrap">🔊 ฟังตัวอย่าง</button>
+      </div>
+      <p class="md:col-span-3 text-xs text-gray-500">คนที่พยายาม hook/ดักสคริปต์ → ส่งรายงานเข้าแผง + คีย์ถูกระงับอัตโนมัติ + เล่นเสียง 4 วิ + เตะออก (ปลดคีย์ที่โดนจับผิดได้ที่ปุ่ม "ระงับ")</p>
+    </div>
     <button id="gen" class="md:col-span-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 font-bold py-4 rounded-xl text-sm">🚀 เจนคีย์</button>
   </div>
 
+  <!-- ใครกำลังรันอยู่ -->
   <div class="bg-[#14141d] border border-gray-800 p-5 rounded-2xl mb-5">
     <h2 class="text-lg font-bold mb-3">👁️ ใครกำลังรันสคริปต์ (เรียลไทม์ รีเฟรชทุก 5 วิ)</h2>
     <div class="overflow-x-auto"><table class="w-full text-left text-sm">
       <thead><tr class="border-b border-gray-800 text-gray-400 text-xs">
-        <th class="py-2 px-3">สถานะ</th><th class="px-3">Username</th><th class="px-3">UserId</th><th class="px-3">PlaceId</th><th class="px-3">คีย์</th><th class="px-3">เห็นล่าสุด</th></tr></thead>
+        <th class="py-2 px-3">สถานะ</th><th class="px-3">Username</th><th class="px-3">UserId</th><th class="px-3">PlaceId</th><th class="px-3">JobId</th><th class="px-3">คีย์</th><th class="px-3">เห็นล่าสุด</th><th class="px-3 text-center">วาร์ป</th></tr></thead>
       <tbody id="players"></tbody></table></div>
   </div>
 
-  <div class="bg-[#14141d] border border-gray-800 p-5 rounded-2xl">
+  <!-- คีย์ทั้งหมด -->
+  <div class="bg-[#14141d] border border-gray-800 p-5 rounded-2xl mb-5">
     <h2 class="text-lg font-bold mb-3">📋 คีย์ทั้งหมด</h2>
     <div class="overflow-x-auto"><table class="w-full text-left text-sm">
       <thead><tr class="border-b border-gray-800 text-gray-400 text-xs">
-        <th class="py-2 px-3">Key</th><th class="px-3">โปรเจกต์</th><th class="px-3">อายุ / หมดเมื่อ</th><th class="px-3 text-center">ผู้ใช้</th><th class="px-3 text-center">จัดการ</th></tr></thead>
+        <th class="py-2 px-3">Key</th><th class="px-3">โปรเจกต์</th><th class="px-3">อายุ / หมดเมื่อ</th><th class="px-3 text-center">ผู้ใช้</th><th class="px-3">สร้างโดย</th><th class="px-3 text-center">จัดการ</th></tr></thead>
       <tbody id="keys"></tbody></table></div>
+  </div>
+
+  <!-- ประวัติการใช้งาน (เฉพาะ owner) -->
+  <div id="audit-panel" class="hidden bg-[#14141d] border border-gray-800 p-5 rounded-2xl">
+    <h2 class="text-lg font-bold mb-3">🕑 ประวัติการใช้งานระบบ (เฉพาะเจ้าของระบบเห็น)</h2>
+    <div class="overflow-x-auto max-h-80 overflow-y-auto"><table class="w-full text-left text-xs">
+      <thead><tr class="border-b border-gray-800 text-gray-400"><th class="py-2 px-2">เวลา</th><th class="px-2">ผู้ใช้</th><th class="px-2">การกระทำ</th><th class="px-2">รายละเอียด</th></tr></thead>
+      <tbody id="audit-list"></tbody></table></div>
   </div>
 </div>
 
 <script>
-let pass = sessionStorage.getItem('p') || prompt('Admin password');
-sessionStorage.setItem('p', pass || '');
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt = t => t ? new Date(t).toLocaleString('th-TH') : '-';
+let TOKEN = sessionStorage.getItem('xenova_token') || '';
+let ME = { username: '', role: '' };
 let DATA = { keys: [], now: Date.now(), onlineMs: 90000 };
 
 async function api(p, body) {
   const r = await fetch('/api/admin/' + p, {
     method: body ? 'POST' : 'GET',
-    headers: { 'x-admin-pass': pass, 'content-type': 'application/json' },
+    headers: { 'x-session-token': TOKEN, 'content-type': 'application/json' },
     body: body ? JSON.stringify(body) : undefined
   });
-  if (r.status === 401) { sessionStorage.removeItem('p'); alert('รหัสผ่านผิด'); location.reload(); return {}; }
+  if (r.status === 401) { doLogout(false); return {}; }
   return r.json();
+}
+
+function showApp() { $('login-screen').classList.add('hidden'); $('app').classList.remove('hidden'); }
+function showLogin(msg) { $('app').classList.add('hidden'); $('login-screen').classList.remove('hidden'); if (msg) $('l-err').textContent = msg; }
+
+function doLogout(callServer) {
+  if (callServer) fetch('/api/auth/logout', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ token: TOKEN }) }).catch(() => {});
+  TOKEN = ''; sessionStorage.removeItem('xenova_token'); showLogin('');
+}
+
+$('l-btn').onclick = async () => {
+  $('l-err').textContent = '';
+  const username = $('l-user').value.trim(), password = $('l-pass').value;
+  if (!username || !password) return $('l-err').textContent = 'กรอกให้ครบ';
+  const r = await fetch('/api/auth/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ username, password }) }).then(x => x.json());
+  if (!r.ok) return $('l-err').textContent = r.msg || 'เข้าสู่ระบบไม่สำเร็จ';
+  TOKEN = r.token; sessionStorage.setItem('xenova_token', TOKEN);
+  ME = { username: r.username, role: r.role };
+  afterLogin();
+};
+$('logout-btn').onclick = () => doLogout(true);
+
+function afterLogin() {
+  $('me-name').textContent = ME.username;
+  $('me-role').textContent = ME.role === 'owner' ? 'เจ้าของระบบ' : 'แอดมิน';
+  const isOwner = ME.role === 'owner';
+  $('owner-panel').classList.toggle('hidden', !isOwner);
+  $('audit-panel').classList.toggle('hidden', !isOwner);
+  showApp();
+  refresh();
+  if (isOwner) { refreshUsers(); refreshAudit(); }
+  if (window.__poll) clearInterval(window.__poll);
+  window.__poll = setInterval(() => { refresh(); if (ME.role === 'owner') refreshAudit(); }, 5000);
+}
+
+// ---------- ผู้ใช้เว็บ ----------
+async function refreshUsers() {
+  const r = await api('users/list');
+  if (!r.ok) return;
+  $('u-list').innerHTML = r.users.map(u => `<tr class="border-b border-gray-800/50">
+    <td class="py-2 px-2 font-bold">${esc(u.username)}</td>
+    <td class="px-2">${u.role === 'owner' ? '👑 เจ้าของระบบ' : 'แอดมิน'}</td>
+    <td class="px-2 text-gray-400">${fmt(u.createdAt)}</td>
+    <td class="px-2 text-center">${u.role === 'owner' ? '-' : `<button data-u="${esc(u.username)}" class="u-del bg-red-700 px-2 py-1 text-xs rounded-lg">ลบ</button>`}</td></tr>`).join('') || '<tr><td colspan="4" class="py-3 text-center text-gray-500">ยังไม่มีบัญชีเพิ่มเติม</td></tr>';
+  document.querySelectorAll('.u-del').forEach(b => b.onclick = async () => {
+    if (!confirm('ลบบัญชี ' + b.dataset.u + ' ?')) return;
+    await api('users/delete', { username: b.dataset.u }); refreshUsers();
+  });
+}
+$('u-create').onclick = async () => {
+  const username = $('u-name').value.trim(), password = $('u-pass').value;
+  const r = await api('users/create', { username, password });
+  if (!r.ok) return alert(r.msg || 'ผิดพลาด');
+  $('u-name').value = ''; $('u-pass').value = ''; alert('สร้างบัญชีสำเร็จ'); refreshUsers();
+};
+
+// ---------- ประวัติ ----------
+async function refreshAudit() {
+  const r = await api('audit');
+  if (!r.ok) return;
+  $('audit-list').innerHTML = r.logs.map(l => `<tr class="border-b border-gray-800/40">
+    <td class="py-1.5 px-2 text-gray-400">${fmt(l.t)}</td><td class="px-2 font-bold">${esc(l.user)}</td>
+    <td class="px-2 text-purple-300">${esc(l.action)}</td><td class="px-2 text-gray-400">${esc(l.detail)}</td></tr>`).join('') || '<tr><td colspan="4" class="py-3 text-center text-gray-500">ยังไม่มีประวัติ</td></tr>';
+}
+
+// ---------- เสียงทดสอบ ----------
+$('sound-test').onclick = () => {
+  const id = $('sound').value.replace(/\D/g, '');
+  if (!id) return alert('ใส่ Sound ID ก่อน (ตัวเลขจากลิงก์เสียงใน Roblox)');
+  window.open('https://www.roblox.com/library/' + id, '_blank');
+};
+
+// ---------- ป้องกันสคริปต์หลายชั้น ----------
+const rn = () => '_' + Math.random().toString(36).slice(2, 8);
+const rk = () => Array.from({ length: 12 }, () => 1 + Math.floor(Math.random() * 254));
+const enc = (txt, k) => { const b = new TextEncoder().encode(txt); let o = ''; for (let i = 0; i < b.length; i++) o += '\\' + String(b[i] ^ k[i % k.length]).padStart(3, '0'); return o; };
+
+function protect(src, o) {
+  const names = Array.from({ length: 10 }, rn);
+  const [T, C, X, D, J1, J2] = names;
+  const k1 = rk(), k2 = rk(), k3 = rk();
+  const snd = o.sound ? `pcall(function() local s=Instance.new("Sound",workspace) s.SoundId="rbxassetid://${o.sound}" s.Volume=10 s.Looped=true s:Play() end)` : '';
+  const kick = o.kick ? `pcall(function() game:GetService("Players").LocalPlayer:Kick("Tampering detected") end)` : '';
+  const junk = `local ${J1}=0 for ${J2}=1,3 do ${J1}=${J1}+${J2} end`;
+  // ชั้นที่ 3 (ในสุด): สคริปต์จริง + ตรวจ hook ก่อนรัน
+  const L3 = `local ${T},${C},${X}=...\n${C}()\n${junk}\n${src}`;
+  // ชั้นที่ 2: ถอดชั้น 3 + ตรวจ hook
+  const L2 = `local ${T},${C},${X},${D}=...\n${C}()\n${junk}\nlocal f=loadstring(${D}("${enc(L3, k3)}",{${k3}}))\n${C}()\nif f then f(${T},${C},${X}) end`;
+  // ชั้นที่ 1: ถอดชั้น 2 + ตรวจ hook
+  const L1 = `local ${T},${C},${X},${D}=...\n${C}()\nlocal f=loadstring(${D}("${enc(L2, k2)}",{${k2}}))\n${C}()\nif f then f(${T},${C},${X},${D}) end`;
+  // ชั้นนอกสุด: ตัวตรวจจับ + ตัวลงโทษ + ถอดชั้น 1
+  return `local ${X}=__X
+local function ${D}(s,k) local b=(bit32 or bit).bxor local o={} for i=1,#s do o[i]=string.char(b(s:byte(i),k[(i-1)%#k+1])) end return table.concat(o) end
+local function ${T}(why)
+  pcall(function()
+    if ${X} then
+      local rq=(syn and syn.request) or (http and http.request) or http_request or request
+      rq({Url=${X}.b.."/api/trap",Method="POST",Headers={["Content-Type"]="application/json"},Body=game:GetService("HttpService"):JSONEncode({key=${X}.k,hwid=${X}.h,username=game:GetService("Players").LocalPlayer.Name,reason=why})})
+    end
+  end)
+  ${snd}
+  task.wait(4)
+  ${kick}
+  while true do task.wait(1e3) end
+end
+local function ${C}()
+  local bad=false
+  pcall(function() if iscclosure and not iscclosure(loadstring) then bad=true end end)
+  pcall(function() if checkcaller and not checkcaller() then bad=true end end)
+  if bad then ${T}("hook") end
+end
+${C}()
+local f=loadstring(${D}("${enc(L1, k1)}",{${k1}}))
+${C}()
+if f then f(${T},${C},${X},${D}) end
+`;
 }
 
 function durLabel(d) {
@@ -99,24 +262,34 @@ function render() {
     return `<tr class="border-b border-gray-800/50">
       <td class="py-2 px-3">${online ? '<span class="text-green-400">🟢 ออนไลน์</span>' : '<span class="text-gray-500">⚫ ออฟไลน์</span>'}</td>
       <td class="px-3 font-bold">${esc(u.username)}</td><td class="px-3 text-gray-400">${esc(u.userId)}</td>
-      <td class="px-3 text-gray-400">${esc(u.placeId)}</td><td class="px-3 font-mono text-yellow-400 text-xs">${esc(k.key)}</td>
-      <td class="px-3 text-gray-400 text-xs">${fmt(u.lastSeen)}</td></tr>`;
-  }).join('') : '<tr><td colspan="6" class="py-4 text-center text-gray-500">ยังไม่มีใครรัน</td></tr>';
+      <td class="px-3 text-gray-400">${esc(u.placeId)}</td><td class="px-3 text-gray-500 text-[10px] max-w-[90px] truncate" title="${esc(u.jobId)}">${esc(u.jobId)}</td>
+      <td class="px-3 font-mono text-yellow-400 text-xs">${esc(k.key)}</td>
+      <td class="px-3 text-gray-400 text-xs">${fmt(u.lastSeen)}</td>
+      <td class="px-3 text-center"><button data-p="${esc(u.placeId)}" data-j="${esc(u.jobId)}" class="warp-btn bg-indigo-700 px-2 py-1 text-xs rounded-lg">📍 วาร์ป</button></td></tr>`;
+  }).join('') : '<tr><td colspan="8" class="py-4 text-center text-gray-500">ยังไม่มีใครรัน</td></tr>';
+
+  document.querySelectorAll('.warp-btn').forEach(b => b.onclick = async () => {
+    const code = `game:GetService("TeleportService"):TeleportToPlaceInstance(${b.dataset.p}, "${b.dataset.j}", game.Players.LocalPlayer)`;
+    await navigator.clipboard.writeText(code);
+    alert('คัดลอกสคริปต์วาร์ปแล้ว เอาไปรันในเกมของคุณเพื่อตามไปที่เซิร์ฟเวอร์เดียวกัน');
+  });
 
   $('keys').innerHTML = keys.length ? keys.map(k => {
     const expired = k.expiresAt && now > k.expiresAt;
     const st = k.banned ? '<span class="text-red-400">ระงับ</span>' : expired ? '<span class="text-red-400">หมดอายุ</span>' : '';
+    const alert_ = (k.tamper || []).length ? `<span class="text-red-400" title="${esc(k.tamper.map(t=>t.username+' '+t.reason).join(', '))}">🚨${k.tamper.length}</span>` : '';
     return `<tr class="border-b border-gray-800/50" data-k="${esc(k.key)}">
-      <td class="py-2 px-3 font-mono text-yellow-400 font-bold">${esc(k.key)} ${st}</td>
+      <td class="py-2 px-3 font-mono text-yellow-400 font-bold">${esc(k.key)} ${st} ${alert_}</td>
       <td class="px-3 text-purple-300">${esc(k.name)}</td>
       <td class="px-3 text-gray-300 text-xs">${durLabel(k.durationDays)}<br><span class="text-gray-500">${k.activatedAt ? (k.expiresAt ? fmt(k.expiresAt) : 'ตลอดชีพ') : 'ยังไม่เริ่มใช้'}</span></td>
       <td class="px-3 text-center text-green-400 font-bold">${Object.keys(k.users).length} / ${k.maxUses}</td>
+      <td class="px-3 text-gray-500 text-xs">${esc(k.createdBy || '-')}</td>
       <td class="px-3 text-center whitespace-nowrap">
         <button data-a="copy" class="bg-purple-600 px-2 py-1 text-xs rounded-lg">📋 โค้ด</button>
         <button data-a="reset" class="bg-gray-700 px-2 py-1 text-xs rounded-lg">รีเซ็ต</button>
         <button data-a="ban" class="bg-yellow-700 px-2 py-1 text-xs rounded-lg">${k.banned ? 'ปลด' : 'ระงับ'}</button>
         <button data-a="delete" class="bg-red-700 px-2 py-1 text-xs rounded-lg">ลบ</button></td></tr>`;
-  }).join('') : '<tr><td colspan="5" class="py-4 text-center text-gray-500">ยังไม่มีคีย์</td></tr>';
+  }).join('') : '<tr><td colspan="6" class="py-4 text-center text-gray-500">ยังไม่มีคีย์</td></tr>';
 }
 
 async function refresh() {
@@ -137,16 +310,25 @@ $('keys').addEventListener('click', async e => {
 });
 
 $('gen').onclick = async () => {
+  const rawScript = $('script').value;
+  const finalScript = $('protect').checked && rawScript.trim()
+    ? protect(rawScript, { sound: $('sound').value.replace(/\D/g, ''), kick: $('kick').checked })
+    : rawScript;
   const r = await api('create', {
     maxUses: $('max-uses').value, durationDays: $('duration').value,
-    count: $('count').value, name: $('name').value, script: $('script').value
+    count: $('count').value, name: $('name').value, script: finalScript
   });
   if (!r.ok) return alert(r.msg || 'ผิดพลาด');
   alert('สร้างสำเร็จ:\n' + r.keys.join('\n'));
   refresh();
 };
 
-refresh(); setInterval(refresh, 5000);
+// ---------- เริ่มต้น ----------
+if (TOKEN) {
+  api('list').then(r => {
+    if (r.ok) { ME = r.me; afterLogin(); } else { showLogin(''); }
+  });
+} else { showLogin(''); }
 </script>
 </body>
-  </html>
+</html>
