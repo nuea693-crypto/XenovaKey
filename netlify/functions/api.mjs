@@ -1,14 +1,20 @@
 import { getStore } from "@netlify/blobs";
 
-const DAY = 864e5, ONLINE_MS = 90e3;
+const DAY = 864e5, ONLINE_MS = 90e3, SESSION_MS = 7 * DAY;
 const store = () => getStore({ name: "xenova", consistency: "strong" });
 const json = (o, s = 200) => new Response(JSON.stringify(o), { status: s, headers: { "content-type": "application/json" } });
+const clip = (v, n) => String(v ?? "").slice(0, n);
+const safe = v => String(v).replace(/[^\w.:\/-]/g, "");
+const hex = n => [...crypto.getRandomValues(new Uint8Array(n))].map(b => b.toString(16).padStart(2, "0")).join("");
 const genKey = () => {
   const c = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   const s = [...crypto.getRandomValues(new Uint8Array(12))].map(x => c[x % c.length]).join("");
   return `XENOVA-${s.slice(0, 4)}-${s.slice(4, 8)}-${s.slice(8)}`;
 };
-const clip = (v, n) => String(v ?? "").slice(0, n);
+async function hashPw(pw, salt) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(salt + ":" + pw));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, "0")).join("");
+}
 
 function check(r, hwid) {
   if (!r) return "ไม่พบคีย์นี้";
@@ -18,6 +24,19 @@ function check(r, hwid) {
   return null;
 }
 
+async function auth(req, s) {
+  const token = req.headers.get("x-session-token");
+  if (!token) return null;
+  const sess = await s.get("sess:" + safe(clip(token, 80)), { type: "json" });
+  if (!sess || sess.exp < Date.now()) return null;
+  return sess;
+}
+
+async function log(s, user, action, detail) {
+  await s.setJSON("log:" + (1e15 - Date.now()) + ":" + hex(4), { t: Date.now(), user, action, detail: clip(detail, 200) });
+}
+
+// ---------- Loader (ตัวโหลดฝั่งลูกค้า) ----------
 const LOADER = `
 local Players=game:GetService("Players")
 local HttpService=game:GetService("HttpService")
@@ -89,19 +108,90 @@ export default async (req) => {
   if (path === "/loader")
     return new Response(LOADER.replaceAll("__BASE__", url.origin), { headers: { "content-type": "text/plain; charset=utf-8" } });
 
-  // ---------- Admin ----------
+  // ---------- Auth (บัญชีผู้ใช้เว็บ) ----------
+  if (path === "/auth/login" && req.method === "POST") {
+    const b = await req.json().catch(() => ({}));
+    const username = safe(clip(b.username, 40)).toLowerCase();
+    const password = clip(b.password, 100);
+    if (!username || !password) return json({ ok: false, msg: "กรอกให้ครบ" });
+    const uk = "u:" + username;
+    let rec = await s.get(uk, { type: "json" });
+    if (!rec) {
+      // สมัครบัญชีเองไม่ได้ ยกเว้น "owner" รอบแรกสุด ที่ต้องรู้รหัสลับใน Netlify (ADMIN_PASSWORD)
+      const pw = process.env.ADMIN_PASSWORD;
+      if (username === "owner" && pw && password === pw) {
+        const salt = hex(8);
+        rec = { username: "owner", role: "owner", salt, passHash: await hashPw(password, salt), createdAt: Date.now(), createdBy: "system" };
+        await s.setJSON(uk, rec);
+      } else {
+        return json({ ok: false, msg: "ไม่พบผู้ใช้นี้ หรือรหัสผ่านไม่ถูกต้อง" });
+      }
+    } else {
+      const h = await hashPw(password, rec.salt);
+      if (h !== rec.passHash) return json({ ok: false, msg: "ไม่พบผู้ใช้นี้ หรือรหัสผ่านไม่ถูกต้อง" });
+    }
+    const token = hex(24);
+    await s.setJSON("sess:" + token, { username: rec.username, role: rec.role, exp: Date.now() + SESSION_MS });
+    await log(s, rec.username, "login", "");
+    return json({ ok: true, token, username: rec.username, role: rec.role });
+  }
+  if (path === "/auth/logout" && req.method === "POST") {
+    const b = await req.json().catch(() => ({}));
+    if (b.token) await s.delete("sess:" + safe(clip(b.token, 80)));
+    return json({ ok: true });
+  }
+
+  // ---------- Admin (ต้องล็อกอินแล้ว) ----------
   if (path.startsWith("/admin/")) {
-    const pw = process.env.ADMIN_PASSWORD;
-    if (!pw || req.headers.get("x-admin-pass") !== pw) return json({ ok: false, msg: "unauthorized" }, 401);
+    const sess = await auth(req, s);
+    if (!sess) return json({ ok: false, msg: "unauthorized" }, 401);
     const b = req.method === "POST" ? await req.json().catch(() => ({})) : {};
     const kk = "k:" + clip(b.key, 40);
+    const isOwner = sess.role === "owner";
 
+    // -- จัดการผู้ใช้เว็บ (เฉพาะ owner) --
+    if (path === "/admin/users/list") {
+      if (!isOwner) return json({ ok: false, msg: "เฉพาะเจ้าของระบบ" }, 403);
+      const { blobs } = await s.list({ prefix: "u:" });
+      const recs = (await Promise.all(blobs.map(x => s.get(x.key, { type: "json" })))).filter(Boolean);
+      return json({ ok: true, users: recs.map(r => ({ username: r.username, role: r.role, createdAt: r.createdAt })) });
+    }
+    if (path === "/admin/users/create") {
+      if (!isOwner) return json({ ok: false, msg: "เฉพาะเจ้าของระบบ" }, 403);
+      const username = safe(clip(b.username, 40)).toLowerCase();
+      const password = clip(b.password, 100);
+      if (!username || password.length < 4) return json({ ok: false, msg: "ตั้งชื่อผู้ใช้ และรหัสผ่านอย่างน้อย 4 ตัว" });
+      if (username === "owner") return json({ ok: false, msg: "ชื่อนี้ถูกใช้แล้ว" });
+      const uk = "u:" + username;
+      if (await s.get(uk, { type: "json" })) return json({ ok: false, msg: "มีชื่อผู้ใช้นี้แล้ว" });
+      const salt = hex(8);
+      await s.setJSON(uk, { username, role: "admin", salt, passHash: await hashPw(password, salt), createdAt: Date.now(), createdBy: sess.username });
+      await log(s, sess.username, "create_user", username);
+      return json({ ok: true });
+    }
+    if (path === "/admin/users/delete") {
+      if (!isOwner) return json({ ok: false, msg: "เฉพาะเจ้าของระบบ" }, 403);
+      const username = safe(clip(b.username, 40)).toLowerCase();
+      if (username === "owner") return json({ ok: false, msg: "ลบเจ้าของระบบไม่ได้" });
+      await s.delete("u:" + username);
+      await log(s, sess.username, "delete_user", username);
+      return json({ ok: true });
+    }
+    if (path === "/admin/audit") {
+      if (!isOwner) return json({ ok: false, msg: "เฉพาะเจ้าของระบบ" }, 403);
+      const { blobs } = await s.list({ prefix: "log:", limit: 150 });
+      const recs = (await Promise.all(blobs.slice(0, 150).map(x => s.get(x.key, { type: "json" })))).filter(Boolean);
+      recs.sort((a, c) => c.t - a.t);
+      return json({ ok: true, logs: recs.slice(0, 150) });
+    }
+
+    // -- จัดการคีย์สคริปต์ (ทุกบัญชีสิทธิ์เท่ากัน) --
     if (path === "/admin/list") {
       const { blobs } = await s.list({ prefix: "k:" });
       const recs = (await Promise.all(blobs.map(x => s.get(x.key, { type: "json" })))).filter(Boolean);
       recs.forEach(r => { r.hasScript = !!r.script; delete r.script; });
       recs.sort((a, c) => c.createdAt - a.createdAt);
-      return json({ ok: true, now: Date.now(), onlineMs: ONLINE_MS, keys: recs });
+      return json({ ok: true, now: Date.now(), onlineMs: ONLINE_MS, keys: recs, me: { username: sess.username, role: sess.role } });
     }
     if (path === "/admin/create") {
       const script = String(b.script || "");
@@ -115,24 +205,40 @@ export default async (req) => {
           maxUses: Math.min(Math.max(parseInt(b.maxUses) || 1, 1), 9999),
           durationDays: Math.max(parseInt(b.durationDays) || 0, 0),
           createdAt: Date.now(), activatedAt: null, expiresAt: null, banned: false, users: {},
+          createdBy: sess.username, tamper: [],
         };
         await s.setJSON("k:" + key, rec);
         out.push(key);
       }
+      await log(s, sess.username, "create_key", `${count} key(s): ${clip(b.name, 60)}`);
       return json({ ok: true, keys: out });
     }
     const r = await s.get(kk, { type: "json" });
     if (!r) return json({ ok: false, msg: "ไม่พบคีย์" });
-    if (path === "/admin/delete") { await s.delete(kk); return json({ ok: true }); }
-    if (path === "/admin/reset") { r.users = {}; }
-    else if (path === "/admin/ban") { r.banned = !r.banned; }
+    if (path === "/admin/delete") { await s.delete(kk); await log(s, sess.username, "delete_key", r.key); return json({ ok: true }); }
+    if (path === "/admin/reset") { r.users = {}; await log(s, sess.username, "reset_key", r.key); }
+    else if (path === "/admin/ban") { r.banned = !r.banned; await log(s, sess.username, r.banned ? "ban_key" : "unban_key", r.key); }
     else if (path === "/admin/kick") { delete r.users[clip(b.hwid, 128)]; }
     else return json({ ok: false, msg: "unknown" }, 404);
     await s.setJSON(kk, r);
     return json({ ok: true });
   }
 
-  // ---------- Script client ----------
+  // ---------- กับดักตรวจจับการแกะสคริปต์ ----------
+  if (path === "/trap" && req.method === "POST") {
+    const tb = await req.json().catch(() => ({}));
+    const tk = "k:" + clip(tb.key, 40).toUpperCase().trim();
+    const tr = await s.get(tk, { type: "json" });
+    if (tr) {
+      tr.tamper = [...(tr.tamper || []), { t: Date.now(), hwid: clip(tb.hwid, 128), username: clip(tb.username, 40), reason: clip(tb.reason, 40) }].slice(-20);
+      tr.banned = true;
+      await s.setJSON(tk, tr);
+      await log(s, "system", "tamper_detected", `${tr.key} by ${clip(tb.username, 40)}`);
+    }
+    return json({ ok: true });
+  }
+
+  // ---------- ฝั่งสคริปต์ลูกค้า ----------
   if (req.method !== "POST" || (path !== "/verify" && path !== "/heartbeat")) return json({ ok: false, msg: "not found" }, 404);
   const b = await req.json().catch(() => ({}));
   const key = "k:" + clip(b.key, 40).toUpperCase().trim();
@@ -153,7 +259,12 @@ export default async (req) => {
   });
   r.users[hwid] = u;
   await s.setJSON(key, r);
-  return json({ ok: true, msg: "OK", expiresAt: r.expiresAt, ...(path === "/verify" ? { script: r.script } : {}) });
+  const payload = { ok: true, msg: "OK", expiresAt: r.expiresAt };
+  if (path === "/verify") {
+    const tag = `local __X={k="${safe(key.slice(2))}",h="${safe(hwid)}",b="${url.origin}"}\n`;
+    payload.script = tag + r.script;
+  }
+  return json(payload);
 };
 
 export const config = { path: "/api/*" };
