@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Xenova Key Panel</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#0b0b0f] text-white min-h-screen font-sans p-4 md:p-6">
+<div class="max-w-6xl mx-auto">
+
+  <div class="bg-gradient-to-r from-[#181824] to-[#25183d] border border-[#7a28ff]/60 p-5 rounded-2xl mb-5 flex justify-between items-center">
+    <h1 class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">🛡️ XENOVA KEY PANEL</h1>
+    <div class="text-right text-xs">
+      <div class="text-green-400 font-bold">🟢 ออนไลน์ตอนนี้: <span id="st-online">0</span> คน</div>
+      <div class="text-gray-400">คีย์ทั้งหมด: <span id="st-keys">0</span></div>
+    </div>
+  </div>
+
+  <div class="bg-[#14141d] border border-gray-800 p-5 rounded-2xl mb-5 grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div>
+      <label class="block text-xs font-semibold text-purple-300 mb-2">1. จำนวนคนใช้สูงสุดต่อคีย์</label>
+      <input id="max-uses" type="number" value="1" min="1" max="9999" class="w-full bg-[#0c0c10] border border-gray-700 rounded-xl px-4 py-3 text-sm">
+    </div>
+    <div>
+      <label class="block text-xs font-semibold text-purple-300 mb-2">2. อายุคีย์</label>
+      <select id="duration" class="w-full bg-[#0c0c10] border border-gray-700 rounded-xl px-4 py-3 text-sm">
+        <option value="1">1 วัน</option><option value="2">2 วัน</option><option value="3">3 วัน</option>
+        <option value="4">4 วัน</option><option value="5">5 วัน</option><option value="6">6 วัน</option>
+        <option value="7">7 วัน</option><option value="30">1 เดือน</option><option value="60">2 เดือน</option>
+        <option value="90">3 เดือน</option><option value="120">4 เดือน</option><option value="150">5 เดือน</option>
+        <option value="365">1 ปี</option><option value="0">ถาวร (ตลอดชีพ)</option>
+      </select>
+    </div>
+    <div>
+      <label class="block text-xs font-semibold text-purple-300 mb-2">จำนวนคีย์ที่จะเจน / ชื่อโปรเจกต์</label>
+      <div class="flex gap-2">
+        <input id="count" type="number" value="1" min="1" max="50" class="w-20 bg-[#0c0c10] border border-gray-700 rounded-xl px-3 py-3 text-sm">
+        <input id="name" placeholder="ชื่อโปรเจกต์ / ลูกค้า" class="flex-1 min-w-0 bg-[#0c0c10] border border-gray-700 rounded-xl px-4 py-3 text-sm">
+      </div>
+    </div>
+    <div class="md:col-span-3">
+      <label class="block text-xs font-semibold text-purple-300 mb-2">3. วางสคริปต์หลัก (Lua) — เก็บบนเซิร์ฟเวอร์ ส่งให้เฉพาะคนที่คีย์ผ่าน</label>
+      <textarea id="script" rows="4" placeholder="print('Hello')" class="w-full bg-[#0c0c10] border border-gray-700 rounded-xl p-4 text-sm font-mono text-purple-300"></textarea>
+    </div>
+    <button id="gen" class="md:col-span-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 font-bold py-4 rounded-xl text-sm">🚀 เจนคีย์</button>
+  </div>
+
+  <div class="bg-[#14141d] border border-gray-800 p-5 rounded-2xl mb-5">
+    <h2 class="text-lg font-bold mb-3">👁️ ใครกำลังรันสคริปต์ (เรียลไทม์ รีเฟรชทุก 5 วิ)</h2>
+    <div class="overflow-x-auto"><table class="w-full text-left text-sm">
+      <thead><tr class="border-b border-gray-800 text-gray-400 text-xs">
+        <th class="py-2 px-3">สถานะ</th><th class="px-3">Username</th><th class="px-3">UserId</th><th class="px-3">PlaceId</th><th class="px-3">คีย์</th><th class="px-3">เห็นล่าสุด</th></tr></thead>
+      <tbody id="players"></tbody></table></div>
+  </div>
+
+  <div class="bg-[#14141d] border border-gray-800 p-5 rounded-2xl">
+    <h2 class="text-lg font-bold mb-3">📋 คีย์ทั้งหมด</h2>
+    <div class="overflow-x-auto"><table class="w-full text-left text-sm">
+      <thead><tr class="border-b border-gray-800 text-gray-400 text-xs">
+        <th class="py-2 px-3">Key</th><th class="px-3">โปรเจกต์</th><th class="px-3">อายุ / หมดเมื่อ</th><th class="px-3 text-center">ผู้ใช้</th><th class="px-3 text-center">จัดการ</th></tr></thead>
+      <tbody id="keys"></tbody></table></div>
+  </div>
+</div>
+
+<script>
+let pass = sessionStorage.getItem('p') || prompt('Admin password');
+sessionStorage.setItem('p', pass || '');
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt = t => t ? new Date(t).toLocaleString('th-TH') : '-';
+let DATA = { keys: [], now: Date.now(), onlineMs: 90000 };
+
+async function api(p, body) {
+  const r = await fetch('/api/admin/' + p, {
+    method: body ? 'POST' : 'GET',
+    headers: { 'x-admin-pass': pass, 'content-type': 'application/json' },
+    body: body ? JSON.stringify(body) : undefined
+  });
+  if (r.status === 401) { sessionStorage.removeItem('p'); alert('รหัสผ่านผิด'); location.reload(); return {}; }
+  return r.json();
+}
+
+function durLabel(d) {
+  if (!d) return 'ถาวร';
+  return ({30:'1 เดือน',60:'2 เดือน',90:'3 เดือน',120:'4 เดือน',150:'5 เดือน',365:'1 ปี'})[d] || d + ' วัน';
+}
+
+function render() {
+  const { keys, now, onlineMs } = DATA;
+  const rows = [];
+  keys.forEach(k => Object.entries(k.users || {}).forEach(([h, u]) => rows.push({ k, h, u })));
+  rows.sort((a, b) => b.u.lastSeen - a.u.lastSeen);
+  const on = rows.filter(r => now - r.u.lastSeen < onlineMs).length;
+  $('st-online').textContent = on; $('st-keys').textContent = keys.length;
+
+  $('players').innerHTML = rows.length ? rows.map(({ k, h, u }) => {
+    const online = now - u.lastSeen < onlineMs;
+    return `<tr class="border-b border-gray-800/50">
+      <td class="py-2 px-3">${online ? '<span class="text-green-400">🟢 ออนไลน์</span>' : '<span class="text-gray-500">⚫ ออฟไลน์</span>'}</td>
+      <td class="px-3 font-bold">${esc(u.username)}</td><td class="px-3 text-gray-400">${esc(u.userId)}</td>
+      <td class="px-3 text-gray-400">${esc(u.placeId)}</td><td class="px-3 font-mono text-yellow-400 text-xs">${esc(k.key)}</td>
+      <td class="px-3 text-gray-400 text-xs">${fmt(u.lastSeen)}</td></tr>`;
+  }).join('') : '<tr><td colspan="6" class="py-4 text-center text-gray-500">ยังไม่มีใครรัน</td></tr>';
+
+  $('keys').innerHTML = keys.length ? keys.map(k => {
+    const expired = k.expiresAt && now > k.expiresAt;
+    const st = k.banned ? '<span class="text-red-400">ระงับ</span>' : expired ? '<span class="text-red-400">หมดอายุ</span>' : '';
+    return `<tr class="border-b border-gray-800/50" data-k="${esc(k.key)}">
+      <td class="py-2 px-3 font-mono text-yellow-400 font-bold">${esc(k.key)} ${st}</td>
+      <td class="px-3 text-purple-300">${esc(k.name)}</td>
+      <td class="px-3 text-gray-300 text-xs">${durLabel(k.durationDays)}<br><span class="text-gray-500">${k.activatedAt ? (k.expiresAt ? fmt(k.expiresAt) : 'ตลอดชีพ') : 'ยังไม่เริ่มใช้'}</span></td>
+      <td class="px-3 text-center text-green-400 font-bold">${Object.keys(k.users).length} / ${k.maxUses}</td>
+      <td class="px-3 text-center whitespace-nowrap">
+        <button data-a="copy" class="bg-purple-600 px-2 py-1 text-xs rounded-lg">📋 โค้ด</button>
+        <button data-a="reset" class="bg-gray-700 px-2 py-1 text-xs rounded-lg">รีเซ็ต</button>
+        <button data-a="ban" class="bg-yellow-700 px-2 py-1 text-xs rounded-lg">${k.banned ? 'ปลด' : 'ระงับ'}</button>
+        <button data-a="delete" class="bg-red-700 px-2 py-1 text-xs rounded-lg">ลบ</button></td></tr>`;
+  }).join('') : '<tr><td colspan="5" class="py-4 text-center text-gray-500">ยังไม่มีคีย์</td></tr>';
+}
+
+async function refresh() {
+  const r = await api('list');
+  if (r.ok) { DATA = r; render(); }
+}
+
+$('keys').addEventListener('click', async e => {
+  const a = e.target.dataset.a; if (!a) return;
+  const key = e.target.closest('tr').dataset.k;
+  if (a === 'copy') {
+    const code = `getgenv().Key = "${key}"\nloadstring(game:HttpGet("${location.origin}/api/loader"))()`;
+    await navigator.clipboard.writeText(code); return alert('คัดลอกโค้ดให้ลูกค้าแล้ว');
+  }
+  if (a === 'delete' && !confirm('ลบคีย์นี้?')) return;
+  if (a === 'reset' && !confirm('ล้างรายชื่อผู้ใช้ของคีย์นี้?')) return;
+  await api(a, { key }); refresh();
+});
+
+$('gen').onclick = async () => {
+  const r = await api('create', {
+    maxUses: $('max-uses').value, durationDays: $('duration').value,
+    count: $('count').value, name: $('name').value, script: $('script').value
+  });
+  if (!r.ok) return alert(r.msg || 'ผิดพลาด');
+  alert('สร้างสำเร็จ:\n' + r.keys.join('\n'));
+  refresh();
+};
+
+refresh(); setInterval(refresh, 5000);
+</script>
+</body>
+  </html>
