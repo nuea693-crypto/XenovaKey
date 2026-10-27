@@ -443,13 +443,18 @@ function render() {
       <td class="px-3 text-gray-400">${esc(u.placeId)}</td><td class="px-3 text-gray-500 text-[10px] max-w-[90px] truncate" title="${esc(u.jobId)}">${esc(u.jobId)}</td>
       <td class="px-3 font-mono text-yellow-400 text-xs">${esc(k.key)}</td>
       <td class="px-3 text-gray-400 text-xs">${fmt(u.lastSeen)}</td>
-      <td class="px-3 text-center"><button data-p="${esc(u.placeId)}" data-j="${esc(u.jobId)}" class="warp-btn bg-indigo-700 px-2 py-1 text-xs rounded-lg">📍 วาร์ป</button></td></tr>`;
+      <td class="px-3 text-center whitespace-nowrap"><button data-p="${esc(u.placeId)}" data-j="${esc(u.jobId)}" data-k="${esc(k.key)}" class="warp-join-btn bg-indigo-700 px-2 py-1 text-xs rounded-lg">🚀 จอยเลย</button> <button data-p="${esc(u.placeId)}" data-j="${esc(u.jobId)}" class="warp-copy-btn bg-gray-700 px-2 py-1 text-xs rounded-lg" title="คัดลอกสคริปต์วาร์ปสำรอง">📋</button></td></tr>`;
   }).join('') : '<tr><td colspan="8" class="py-4 text-center text-gray-500">ยังไม่มีใครรัน NVEX Loader</td></tr>';
 
-  document.querySelectorAll('.warp-btn').forEach(b => b.onclick = async () => {
+  document.querySelectorAll('.warp-join-btn').forEach(b => b.onclick = () => {
+    const link = `roblox://experiences/start?placeId=${b.dataset.p}&gameInstanceId=${b.dataset.j}`;
+    const a = document.createElement('a'); a.href = link; a.click();
+    if (b.dataset.k) api('announce-one', { key: b.dataset.k });
+  });
+  document.querySelectorAll('.warp-copy-btn').forEach(b => b.onclick = async () => {
     const code = `game:GetService("TeleportService"):TeleportToPlaceInstance(${b.dataset.p}, "${b.dataset.j}", game.Players.LocalPlayer)`;
     await navigator.clipboard.writeText(code);
-    alert('คัดลอกสคริปต์วาร์ปแล้ว เอาไปรันในเกมของคุณเพื่อตามไปที่เซิร์ฟเวอร์เดียวกัน');
+    alert('คัดลอกสคริปต์วาร์ปสำรองแล้ว ใช้กรณีปุ่ม "จอยเลย" เปิด Roblox ไม่ได้บนเครื่องนี้');
   });
 
   $('keys').innerHTML = keys.length ? keys.map(k => {
