@@ -3,185 +3,358 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NVEX Loader | Owner &amp; Admin Control Panel</title>
+<title>NVEX — Shadow Control Panel</title>
 <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-[#0b0b0f] text-white min-h-screen font-sans p-4 md:p-6">
+<style>
+  :root {
+    --red: #dc2626; --red-dim: rgba(220,38,38,0.15); --red-glow: rgba(220,38,38,0.4);
+    --purple: #7c3aed; --purple-dim: rgba(124,58,237,0.15);
+    --card: rgba(255,255,255,0.035); --border: rgba(255,255,255,0.08);
+    --border-red: rgba(220,38,38,0.3);
+  }
+  * { box-sizing: border-box; }
+  body { background: #060608; color: #e2e8f0; font-family: 'Inter', ui-sans-serif, system-ui, sans-serif; min-height: 100vh; }
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--red-glow); border-radius: 99px; }
 
-<!-- หน้าล็อกอิน -->
-<div id="login-screen" class="max-w-sm mx-auto mt-20 bg-[#14141d] border border-purple-900/50 rounded-2xl p-6">
-  <h1 class="text-xl font-extrabold text-center mb-1 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">🛡️ NVEX CONTROL PANEL</h1>
-  <p class="text-xs text-gray-500 text-center mb-5">เข้าสู่ระบบด้วยบัญชีของคุณ (ระบบจำการเข้าสู่ระบบให้อัตโนมัติ)</p>
-  <input id="l-user" placeholder="ชื่อผู้ใช้" class="w-full bg-[#0c0c10] border border-gray-700 rounded-xl px-4 py-3 text-sm mb-3">
-  <input id="l-pass" type="password" placeholder="รหัสผ่าน" class="w-full bg-[#0c0c10] border border-gray-700 rounded-xl px-4 py-3 text-sm mb-3">
-  <button id="l-btn" class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 font-bold py-3 rounded-xl text-sm">เข้าสู่ระบบ</button>
-  <p id="l-err" class="text-red-400 text-xs text-center mt-3"></p>
+  /* layout */
+  #layout { display: flex; min-height: 100vh; }
+  #sidebar { width: 220px; min-width: 220px; background: rgba(8,6,12,0.95); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; height: 100vh; z-index: 50; transition: transform .3s; }
+  #main { margin-left: 220px; flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+  @media(max-width:768px){ #sidebar{transform:translateX(-100%);} #sidebar.open{transform:none;} #main{margin-left:0;} }
+
+  /* sidebar branding */
+  .sidebar-brand { padding: 20px 16px 12px; border-bottom: 1px solid var(--border); }
+  .brand-char { width: 56px; height: 56px; border-radius: 50%; border: 2px solid var(--red); object-fit: cover; box-shadow: 0 0 16px var(--red-glow); display: block; margin: 0 auto 8px; }
+  .brand-name { text-align: center; font-weight: 800; font-size: 15px; background: linear-gradient(135deg, #ef4444, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .brand-sub { text-align: center; font-size: 10px; color: #6b7280; margin-top: 2px; }
+
+  /* nav */
+  #nav { flex: 1; padding: 8px; overflow-y: auto; }
+  .nav-section { font-size: 9px; font-weight: 700; letter-spacing: .1em; color: #4b5563; text-transform: uppercase; padding: 12px 8px 4px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px; cursor: pointer; font-size: 13px; color: #9ca3af; transition: all .15s; margin-bottom: 1px; user-select: none; }
+  .nav-item:hover { background: var(--red-dim); color: #e5e7eb; }
+  .nav-item.active { background: linear-gradient(135deg, var(--red-dim), var(--purple-dim)); color: #fff; border-left: 2px solid var(--red); box-shadow: inset 0 0 20px rgba(220,38,38,0.1); }
+  .nav-item .ni { font-size: 16px; width: 20px; text-align: center; }
+
+  /* user info footer */
+  .sidebar-user { padding: 12px 16px; border-top: 1px solid var(--border); }
+  .user-row { display: flex; align-items: center; gap: 8px; }
+  .user-avatar { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, var(--red), var(--purple)); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+  .user-name { font-size: 12px; font-weight: 600; }
+  .user-role { font-size: 10px; color: #6b7280; }
+
+  /* topbar */
+  #topbar { background: rgba(8,6,12,0.8); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); padding: 10px 20px; display: flex; align-items: center; justify-between; gap: 12px; position: sticky; top: 0; z-index: 40; }
+  .topbar-stats { display: flex; gap: 16px; flex: 1; justify-content: flex-end; }
+  .stat-pill { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 4px 12px; font-size: 11px; display: flex; align-items: center; gap: 6px; }
+
+  /* content */
+  #content { flex: 1; padding: 20px; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* cards */
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 16px; }
+  .card-red { border-color: var(--border-red); background: rgba(220,38,38,0.04); }
+  .card-purple { border-color: rgba(124,58,237,0.3); background: rgba(124,58,237,0.04); }
+  .card-yellow { border-color: rgba(234,179,8,0.3); background: rgba(234,179,8,0.04); }
+  .card-title { font-size: 15px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap-8px; }
+
+  /* inputs */
+  .inp { width: 100%; background: rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; font-size: 13px; color: #e2e8f0; outline: none; transition: border .15s; }
+  .inp:focus { border-color: var(--red); }
+  .inp::placeholder { color: #4b5563; }
+  textarea.inp { resize: vertical; }
+  select.inp { cursor: pointer; }
+
+  /* buttons */
+  .btn { border-radius: 10px; padding: 9px 18px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all .15s; }
+  .btn-red { background: linear-gradient(135deg, #dc2626, #991b1b); color: white; }
+  .btn-red:hover { background: linear-gradient(135deg, #ef4444, #b91c1c); box-shadow: 0 0 12px var(--red-glow); }
+  .btn-purple { background: linear-gradient(135deg, #7c3aed, #5b21b6); color: white; }
+  .btn-purple:hover { box-shadow: 0 0 12px rgba(124,58,237,0.5); }
+  .btn-ghost { background: rgba(255,255,255,0.06); color: #9ca3af; border: 1px solid var(--border); }
+  .btn-ghost:hover { background: rgba(255,255,255,0.1); color: white; }
+  .btn-sm { padding: 5px 10px; font-size: 11px; border-radius: 7px; }
+  .btn-full { width: 100%; }
+
+  /* tables */
+  .tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .tbl th { padding: 8px 10px; text-align: left; color: #6b7280; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; border-bottom: 1px solid var(--border); }
+  .tbl td { padding: 10px 10px; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; }
+  .tbl tr:last-child td { border-bottom: none; }
+  .tbl tr:hover td { background: rgba(255,255,255,0.02); }
+  .tbl-wrap { overflow-x: auto; }
+  .tbl-scroll { overflow-x: auto; max-height: 380px; overflow-y: auto; }
+
+  /* badge */
+  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 99px; font-size: 10px; font-weight: 600; }
+  .badge-green { background: rgba(34,197,94,0.15); color: #4ade80; }
+  .badge-red { background: rgba(220,38,38,0.15); color: #f87171; }
+  .badge-gray { background: rgba(107,114,128,0.15); color: #6b7280; }
+  .badge-yellow { background: rgba(234,179,8,0.15); color: #facc15; }
+  .badge-purple { background: rgba(124,58,237,0.15); color: #a78bfa; }
+  .badge-indigo { background: rgba(99,102,241,0.15); color: #818cf8; }
+
+  /* cooldown UI */
+  #ann-cooldown-bar { height: 3px; background: rgba(255,255,255,0.1); border-radius: 99px; overflow: hidden; margin-top: 8px; display: none; }
+  #ann-cooldown-fill { height: 100%; background: linear-gradient(90deg, var(--red), var(--purple)); width: 100%; transition: width .1s linear; border-radius: 99px; }
+
+  /* online dot */
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+  .pulse { animation: pulse 2s infinite; }
+
+  /* chat */
+  #chat-box { background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 12px; padding: 12px; height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+  .chat-msg { display: flex; flex-direction: column; }
+  .chat-msg.mine { align-items: flex-end; }
+  .chat-msg.other { align-items: flex-start; }
+  .chat-bubble { max-width: 75%; border-radius: 12px; padding: 8px 12px; font-size: 12px; }
+  .mine .chat-bubble { background: linear-gradient(135deg, #7c3aed, #dc2626); color: white; border-bottom-right-radius: 3px; }
+  .other .chat-bubble { background: rgba(255,255,255,0.07); color: #e2e8f0; border-bottom-left-radius: 3px; }
+  .chat-meta { font-size: 10px; color: #4b5563; margin-bottom: 3px; }
+
+  /* hamburger */
+  #hamburger { display: none; background: none; border: none; color: white; font-size: 20px; cursor: pointer; padding: 4px; }
+  @media(max-width:768px){ #hamburger{display:flex;} }
+
+  /* glow text */
+  .glow-red { text-shadow: 0 0 12px rgba(220,38,38,0.8); }
+  .grad-text { background: linear-gradient(135deg, #ef4444, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+  /* overlay */
+  #sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 49; }
+  #sidebar-overlay.show { display: block; }
+</style>
+</head>
+<body>
+
+<!-- Login -->
+<div id="login-screen" style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:#060608;">
+  <div style="width:100%;max-width:380px;padding:16px;">
+    <div class="card" style="border-color:var(--border-red);text-align:center;padding:32px 28px;">
+      <img src="data:image/jpeg;base64,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" style="width:80px;height:80px;border-radius:50%;border:2px solid var(--red);box-shadow:0 0 24px var(--red-glow);object-fit:cover;margin:0 auto 16px;">
+      <div class="grad-text" style="font-size:20px;font-weight:800;margin-bottom:4px;">NVEX Shadow Panel</div>
+      <div style="font-size:11px;color:#6b7280;margin-bottom:24px;">ระบบควบคุมส่วนกลาง</div>
+      <input id="l-user" class="inp" placeholder="ชื่อผู้ใช้" style="margin-bottom:10px;">
+      <input id="l-pass" class="inp" type="password" placeholder="รหัสผ่าน" style="margin-bottom:16px;">
+      <button id="l-btn" class="btn btn-red btn-full" style="padding:12px;">เข้าสู่ระบบ</button>
+      <p id="l-err" style="font-size:11px;color:#f87171;margin-top:10px;min-height:16px;"></p>
+      <p style="font-size:10px;color:#374151;margin-top:8px;">ระบบจำการเข้าสู่ระบบอัตโนมัติ 30 วัน</p>
+    </div>
+  </div>
 </div>
 
-<!-- แอปหลัก -->
-<div id="app" class="max-w-6xl mx-auto hidden">
+<!-- Sidebar overlay (mobile) -->
+<div id="sidebar-overlay"></div>
 
-  <div class="bg-gradient-to-r from-[#181824] to-[#25183d] border border-[#7a28ff]/60 p-5 rounded-2xl mb-4 flex justify-between items-center flex-wrap gap-2">
-    <div>
-      <h1 class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">🛡️ NVEX — ADMIN COMMAND CENTER</h1>
-      <p class="text-xs text-purple-300 mt-1">ระบบควบคุมส่วนกลางค่าย NVEX</p>
+<!-- Main layout -->
+<div id="layout" style="display:none;">
+  <!-- Sidebar -->
+  <aside id="sidebar">
+    <div class="sidebar-brand">
+      <img src="data:image/jpeg;base64,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" class="brand-char" alt="Shadow">
+      <div class="brand-name">NVEX PANEL</div>
+      <div class="brand-sub">Shadow Control System</div>
     </div>
-    <div class="text-right text-xs">
-      <div class="text-green-400 font-bold">🟢 ออนไลน์ตอนนี้: <span id="st-online">0</span> คน</div>
-      <div class="text-gray-400">คีย์ทั้งหมด: <span id="st-keys">0</span></div>
-      <div class="text-purple-300 mt-1">👤 <span id="me-name"></span> <span id="me-role" class="px-1.5 py-0.5 rounded bg-purple-900/60 text-[10px]"></span> <button id="logout-btn" class="text-gray-400 underline ml-1">ออกจากระบบ</button></div>
+
+    <nav id="nav">
+      <div class="nav-section">หลัก</div>
+      <div class="nav-item active" data-tab="create"><span class="ni">🔑</span> สร้างคีย์</div>
+      <div class="nav-item" data-tab="announce"><span class="ni">📢</span> ประกาศ</div>
+      <div class="nav-item" data-tab="players"><span class="ni">👁️</span> ผู้เล่นออนไลน์</div>
+      <div class="nav-item" data-tab="keys"><span class="ni">📋</span> คีย์ทั้งหมด</div>
+      <div class="nav-section">ทีม</div>
+      <div class="nav-item" data-tab="chat"><span class="ni">💬</span> ห้องพูดคุย</div>
+      <div class="nav-item" data-tab="custlog"><span class="ni">🕑</span> ประวัติลูกค้า</div>
+      <div id="owner-nav" style="display:none;">
+        <div class="nav-section">Owner Only</div>
+        <div class="nav-item" data-tab="admins"><span class="ni">👑</span> บัญชีแอดมิน</div>
+        <div class="nav-item" data-tab="syslog"><span class="ni">🔒</span> ประวัติระบบ</div>
+      </div>
+    </nav>
+
+    <div class="sidebar-user">
+      <div class="user-row">
+        <div class="user-avatar" id="user-avatar-letter">?</div>
+        <div>
+          <div class="user-name" id="me-name">-</div>
+          <div class="user-role" id="me-role">-</div>
+        </div>
+        <button id="logout-btn" class="btn btn-ghost btn-sm" style="margin-left:auto;padding:4px 8px;font-size:10px;">ออก</button>
+      </div>
     </div>
-  </div>
+  </aside>
 
-  <!-- แถบหมวดเมนู -->
-  <div id="tabbar" class="flex flex-wrap gap-2 mb-5 bg-[#14141d] border border-gray-800 rounded-2xl p-2"></div>
+  <!-- Main -->
+  <main id="main">
+    <!-- Topbar -->
+    <div id="topbar">
+      <button id="hamburger">☰</button>
+      <div class="grad-text" style="font-weight:800;font-size:15px;">🛡️ NVEX</div>
+      <div class="topbar-stats">
+        <div class="stat-pill"><span class="pulse" style="color:#4ade80;">●</span> <span>ออนไลน์ <strong id="st-online">0</strong> คน</span></div>
+        <div class="stat-pill">🔑 <span>คีย์ทั้งหมด <strong id="st-keys">0</strong></span></div>
+      </div>
+    </div>
 
-  <!-- หมวด: เจนคีย์ -->
-  <div data-tab="create" class="tab-panel">
-    <div class="bg-[#14141d] border border-gray-800 p-5 rounded-2xl mb-5 grid grid-cols-1 md:grid-cols-3 gap-4">
-      <div>
-        <label class="block text-xs font-semibold text-purple-300 mb-2">1. จำนวนคนใช้สูงสุดต่อคีย์</label>
-        <input id="max-uses" type="number" value="1" min="1" max="9999" class="w-full bg-[#0c0c10] border border-gray-700 rounded-xl px-4 py-3 text-sm">
-      </div>
-      <div>
-        <label class="block text-xs font-semibold text-purple-300 mb-2">2. อายุคีย์</label>
-        <select id="duration" class="w-full bg-[#0c0c10] border border-gray-700 rounded-xl px-4 py-3 text-sm">
-          <option value="1">1 วัน</option><option value="2">2 วัน</option><option value="3">3 วัน</option>
-          <option value="4">4 วัน</option><option value="5">5 วัน</option><option value="6">6 วัน</option>
-          <option value="7">7 วัน</option><option value="30">1 เดือน</option><option value="60">2 เดือน</option>
-          <option value="90">3 เดือน</option><option value="120">4 เดือน</option><option value="150">5 เดือน</option>
-          <option value="365">1 ปี</option><option value="0">ถาวร (ตลอดชีพ)</option>
-        </select>
-      </div>
-      <div>
-        <label class="block text-xs font-semibold text-purple-300 mb-2">จำนวนคีย์ที่จะเจน / ชื่อโปรเจกต์</label>
-        <div class="flex gap-2">
-          <input id="count" type="number" value="1" min="1" max="50" class="w-20 bg-[#0c0c10] border border-gray-700 rounded-xl px-3 py-3 text-sm">
-          <input id="name" placeholder="ชื่อโปรเจกต์ / ลูกค้า" class="flex-1 min-w-0 bg-[#0c0c10] border border-gray-700 rounded-xl px-4 py-3 text-sm">
+    <!-- Content -->
+    <div id="content">
+
+      <!-- สร้างคีย์ -->
+      <div class="tab-panel active" data-tab="create">
+        <div class="card">
+          <div class="card-title grad-text">🔑 สร้างคีย์ใหม่</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:12px;">
+            <div>
+              <label style="font-size:11px;color:#9ca3af;display:block;margin-bottom:6px;">จำนวนคนใช้สูงสุด</label>
+              <input id="max-uses" class="inp" type="number" value="1" min="1" max="9999">
+            </div>
+            <div>
+              <label style="font-size:11px;color:#9ca3af;display:block;margin-bottom:6px;">อายุคีย์</label>
+              <select id="duration" class="inp">
+                <option value="1">1 วัน</option><option value="2">2 วัน</option><option value="3">3 วัน</option>
+                <option value="4">4 วัน</option><option value="5">5 วัน</option><option value="6">6 วัน</option>
+                <option value="7">7 วัน</option><option value="30">1 เดือน</option><option value="60">2 เดือน</option>
+                <option value="90">3 เดือน</option><option value="120">4 เดือน</option><option value="150">5 เดือน</option>
+                <option value="365">1 ปี</option><option value="0">ถาวร (ตลอดชีพ)</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:11px;color:#9ca3af;display:block;margin-bottom:6px;">จำนวนที่จะเจน</label>
+              <input id="count" class="inp" type="number" value="1" min="1" max="50">
+            </div>
+            <div>
+              <label style="font-size:11px;color:#9ca3af;display:block;margin-bottom:6px;">ชื่อโปรเจกต์ / ลูกค้า</label>
+              <input id="name" class="inp" placeholder="ชื่อโปรเจกต์">
+            </div>
+          </div>
+          <div style="margin-bottom:12px;">
+            <label style="font-size:11px;color:#9ca3af;display:block;margin-bottom:6px;">สคริปต์หลัก (Lua) — เก็บบนเซิร์ฟเวอร์</label>
+            <textarea id="script" class="inp" rows="4" placeholder="print('NVEX Connected!')"></textarea>
+          </div>
+          <div class="card card-purple" style="margin-bottom:12px;padding:14px;">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:8px;">
+              <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;"><input id="protect" type="checkbox" checked style="accent-color:var(--red);"> 🛡️ ป้องกัน 3 ชั้น + hook 4 จุด</label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;"><input id="kick" type="checkbox" checked style="accent-color:var(--red);"> 🚪 เตะออกเมื่อโดนจับ</label>
+              <div style="display:flex;gap:6px;">
+                <input id="sound" class="inp" style="flex:1;" placeholder="Sound ID เสียงเตือน">
+                <button id="sound-test" class="btn btn-ghost btn-sm">🔊</button>
+              </div>
+            </div>
+            <p style="font-size:10px;color:#6b7280;">คนที่ hook/ดักสคริปต์ → บันทึก + ระงับคีย์อัตโนมัติ + เล่นเสียง + เตะออก</p>
+          </div>
+          <button id="gen" class="btn btn-red btn-full" style="padding:13px;font-size:14px;">🚀 เจนคีย์ NVEX</button>
         </div>
       </div>
-      <div class="md:col-span-3">
-        <label class="block text-xs font-semibold text-purple-300 mb-2">3. วางสคริปต์หลัก (Lua) — เก็บบนเซิร์ฟเวอร์ ส่งให้เฉพาะคนที่คีย์ผ่าน</label>
-        <textarea id="script" rows="4" placeholder="print('NVEX Loader Connected!')" class="w-full bg-[#0c0c10] border border-gray-700 rounded-xl p-4 text-sm font-mono text-purple-300"></textarea>
-      </div>
-      <div class="md:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-4 bg-[#0c0c10] border border-purple-900/50 rounded-xl p-4">
-        <label class="flex items-center gap-2 text-sm"><input id="protect" type="checkbox" checked> 🛡️ ป้องกันหลายชั้น (เข้ารหัส 3 ชั้น + ตรวจจับ hook 4 จุด)</label>
-        <label class="flex items-center gap-2 text-sm"><input id="kick" type="checkbox" checked> 🚪 เตะออกจากเกมเมื่อโดนจับได้</label>
-        <div class="flex gap-2">
-          <input id="sound" placeholder="Sound ID เสียงเตือน (ไม่ใส่ก็ได้)" class="flex-1 bg-[#14141d] border border-gray-700 rounded-lg px-3 py-2 text-sm">
-          <button id="sound-test" type="button" class="bg-gray-700 px-3 py-2 rounded-lg text-xs whitespace-nowrap">🔊 ฟังตัวอย่าง</button>
+
+      <!-- ประกาศ -->
+      <div class="tab-panel" data-tab="announce">
+        <div class="card card-purple">
+          <div class="card-title" style="color:#a78bfa;">📢 ส่งประกาศถึงลูกค้าออนไลน์</div>
+          <p style="font-size:11px;color:#6b7280;margin-bottom:12px;">ขึ้นการ์ดสวยๆ มุมบนจอลูกค้า พร้อมไอคอนและเสียง</p>
+          <textarea id="announcement-text" class="inp" rows="3" placeholder="พิมพ์ข้อความประกาศ..."></textarea>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-top:10px;margin-bottom:12px;">
+            <label style="display:flex;align-items:center;gap:8px;font-size:12px;background:rgba(0,0,0,0.3);padding:8px 12px;border-radius:8px;cursor:pointer;border:1px solid var(--border);"><input id="ann-sound-on" type="checkbox" style="accent-color:var(--red);"> 🔊 เล่นเสียง</label>
+            <input id="ann-sound-id" class="inp" placeholder="Sound ID">
+            <label style="display:flex;align-items:center;gap:8px;font-size:12px;background:rgba(0,0,0,0.3);padding:8px 12px;border-radius:8px;cursor:pointer;border:1px solid var(--border);"><input id="ann-reply-on" type="checkbox" style="accent-color:var(--red);"> 💬 ให้ตอบกลับได้</label>
+          </div>
+          <button id="announce-btn" class="btn btn-full" style="background:linear-gradient(135deg,#7c3aed,#dc2626);color:white;padding:12px;font-size:14px;">🚀 ส่งประกาศ</button>
+          <div id="ann-cooldown-bar"><div id="ann-cooldown-fill"></div></div>
+          <p id="ann-cooldown-txt" style="font-size:11px;color:#f87171;margin-top:6px;min-height:16px;"></p>
         </div>
-        <p class="md:col-span-3 text-xs text-gray-500">คนที่พยายาม hook/ดักสคริปต์ → ส่งรายงานเข้าแผง + คีย์ถูกระงับอัตโนมัติ + เล่นเสียง 4 วิ + เตะออก</p>
       </div>
-      <button id="gen" class="md:col-span-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 font-bold py-4 rounded-xl text-sm">🚀 เจนคีย์ NVEX</button>
-    </div>
-  </div>
 
-  <!-- หมวด: ประกาศ -->
-  <div data-tab="announce" class="tab-panel">
-    <div class="bg-gradient-to-br from-[#241a3d] to-[#14141d] border border-purple-500/50 p-5 rounded-2xl mb-5">
-      <h2 class="text-lg font-bold text-purple-300 mb-1 flex items-center gap-2">📢 ส่งประกาศถึงลูกค้าทุกคนที่ออนไลน์</h2>
-      <p class="text-xs text-gray-500 mb-4">ขึ้นเป็นการ์ดสวยๆ มุมบนจอ มีไอคอน ไล่สีม่วง-ชมพู พร้อมเลือกเสียงและเปิดให้ตอบกลับได้</p>
-      <textarea id="announcement-text" rows="2" placeholder="เช่น อัปเดตสคริปต์เวอร์ชันใหม่แล้ว โหลดใหม่ได้เลย" class="w-full bg-[#0c0c10] border border-gray-700 rounded-xl px-4 py-3 text-sm mb-3"></textarea>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-        <label class="flex items-center gap-2 text-sm bg-[#0c0c10] border border-gray-700 rounded-xl px-3 py-2"><input id="ann-sound-on" type="checkbox"> 🔊 เล่นเสียงตอนประกาศขึ้น (แบบเสียงโดเนท)</label>
-        <input id="ann-sound-id" placeholder="Sound ID (ใส่ถ้าเปิดเสียง)" class="bg-[#0c0c10] border border-gray-700 rounded-xl px-3 py-2 text-sm">
-        <label class="flex items-center gap-2 text-sm bg-[#0c0c10] border border-gray-700 rounded-xl px-3 py-2"><input id="ann-reply-on" type="checkbox"> 💬 ให้ลูกค้าพิมพ์ตอบกลับได้</label>
+      <!-- ผู้เล่นออนไลน์ -->
+      <div class="tab-panel" data-tab="players">
+        <div class="card">
+          <div class="card-title grad-text">👁️ ผู้เล่นออนไลน์ (รีเฟรชทุก 5 วิ)</div>
+          <div class="tbl-wrap"><table class="tbl">
+            <thead><tr>
+              <th>สถานะ</th><th>Username</th><th>UserId</th><th>PlaceId</th><th>JobId</th><th>คีย์</th><th>เห็นล่าสุด</th><th>จัดการ</th>
+            </tr></thead>
+            <tbody id="players"></tbody>
+          </table></div>
+        </div>
       </div>
-      <button id="announce-btn" class="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 px-6 py-3 rounded-xl text-sm font-bold">🚀 ส่งประกาศ</button>
-    </div>
-  </div>
 
-  <!-- หมวด: ผู้เล่นออนไลน์ -->
-  <div data-tab="players" class="tab-panel">
-    <div class="bg-[#14141d] border border-gray-800 p-5 rounded-2xl mb-5">
-      <h2 class="text-lg font-bold mb-3">👁️ ใครกำลังรันสคริปต์ NVEX อยู่ (เรียลไทม์ รีเฟรชทุก 5 วิ)</h2>
-      <div class="overflow-x-auto"><table class="w-full text-left text-sm">
-        <thead><tr class="border-b border-gray-800 text-gray-400 text-xs">
-          <th class="py-2 px-3">สถานะ</th><th class="px-3">Username</th><th class="px-3">UserId</th><th class="px-3">PlaceId</th><th class="px-3">JobId</th><th class="px-3">คีย์</th><th class="px-3">เห็นล่าสุด</th><th class="px-3 text-center">วาร์ป</th></tr></thead>
-        <tbody id="players"></tbody></table></div>
-    </div>
-  </div>
-
-  <!-- หมวด: คีย์ทั้งหมด -->
-  <div data-tab="keys" class="tab-panel">
-    <div class="bg-[#14141d] border border-gray-800 p-5 rounded-2xl mb-5">
-      <h2 class="text-lg font-bold mb-3">📋 รายการคีย์ทั้งหมดในระบบ NVEX</h2>
-      <div class="overflow-x-auto"><table class="w-full text-left text-sm">
-        <thead><tr class="border-b border-gray-800 text-gray-400 text-xs">
-          <th class="py-2 px-3">Key Code</th><th class="px-3">โปรเจกต์</th><th class="px-3">อายุ / หมดเมื่อ</th><th class="px-3 text-center">ผู้ใช้</th><th class="px-3">สร้างโดย</th><th class="px-3 text-center">จัดการ</th></tr></thead>
-        <tbody id="keys"></tbody></table></div>
-    </div>
-  </div>
-
-  <!-- หมวด: ประวัติลูกค้า (ทุกคนเห็น) -->
-  <div data-tab="custlog" class="tab-panel">
-    <div class="bg-[#14141d] border border-gray-800 p-5 rounded-2xl mb-5">
-      <h2 class="text-lg font-bold mb-3">🕑 ประวัติลูกค้า/คีย์ (ดูได้ทุกบัญชี)</h2>
-      <p class="text-xs text-gray-500 mb-3">บันทึกการสร้าง/ลบ/ระงับ/รีเซ็ตคีย์ การตรวจจับการแกะสคริปต์ และคำตอบกลับประกาศจากลูกค้า</p>
-      <div class="overflow-x-auto max-h-96 overflow-y-auto"><table class="w-full text-left text-xs">
-        <thead><tr class="border-b border-gray-800 text-gray-400"><th class="py-2 px-2">เวลา</th><th class="px-2">ผู้ใช้</th><th class="px-2">การกระทำ</th><th class="px-2">รายละเอียด</th></tr></thead>
-        <tbody id="cust-log-list"></tbody></table></div>
-    </div>
-  </div>
-
-  <!-- หมวด: พูดคุยทีม + คีย์ส่วนรวม -->
-  <div data-tab="chat" class="tab-panel">
-    <div class="bg-[#14141d] border border-indigo-700/50 p-5 rounded-2xl mb-5">
-      <h2 class="text-lg font-bold mb-3">💬 ห้องพูดคุยทีม (ทุกบัญชีคุยกันได้)</h2>
-      <div id="chat-box" class="bg-[#0c0c10] border border-gray-800 rounded-xl p-3 h-72 overflow-y-auto mb-3 flex flex-col gap-3"></div>
-      <div class="flex gap-2 items-end">
-        <input id="chat-text" placeholder="พิมพ์ข้อความ..." class="flex-1 bg-[#0c0c10] border border-gray-700 rounded-xl px-4 py-2.5 text-sm">
-        <label class="bg-gray-700 px-3 py-2.5 rounded-xl text-xs cursor-pointer whitespace-nowrap">📷 รูป<input id="chat-img" type="file" accept="image/*" class="hidden"></label>
-        <button id="chat-send" class="bg-indigo-600 hover:bg-indigo-700 px-5 py-2.5 rounded-xl text-sm font-bold">ส่ง</button>
+      <!-- คีย์ทั้งหมด -->
+      <div class="tab-panel" data-tab="keys">
+        <div class="card">
+          <div class="card-title grad-text">📋 คีย์ทั้งหมดในระบบ</div>
+          <div class="tbl-wrap"><table class="tbl">
+            <thead><tr>
+              <th>Key Code</th><th>โปรเจกต์</th><th>อายุ</th><th>ผู้ใช้</th><th>สร้างโดย</th><th>จัดการ</th>
+            </tr></thead>
+            <tbody id="keys"></tbody>
+          </table></div>
+        </div>
       </div>
-      <p id="chat-img-name" class="text-xs text-gray-500 mt-1"></p>
-    </div>
 
-    <div class="bg-[#14141d] border border-yellow-700/40 p-5 rounded-2xl">
-      <h2 class="text-lg font-bold mb-1 text-yellow-400">🔑 คีย์ส่วนรวมของห้องนี้</h2>
-      <p class="text-xs text-gray-500 mb-3">คีย์ที่เจนจากช่องนี้เท่านั้นที่นับเป็นคีย์ส่วนรวม คีย์ที่เจนจากแท็บ "สร้างคีย์" ปกติจะไม่นับรวมที่นี่</p>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-        <input id="room-name" placeholder="ชื่อโปรเจกต์" class="bg-[#0c0c10] border border-gray-700 rounded-xl px-4 py-2.5 text-sm">
-        <input id="room-maxuses" type="number" value="1" min="1" placeholder="จำนวนคนใช้สูงสุด" class="bg-[#0c0c10] border border-gray-700 rounded-xl px-4 py-2.5 text-sm">
+      <!-- ห้องพูดคุย -->
+      <div class="tab-panel" data-tab="chat">
+        <div class="card">
+          <div class="card-title" style="color:#818cf8;">💬 ห้องพูดคุยทีม</div>
+          <div id="chat-box"></div>
+          <div style="display:flex;gap:8px;margin-top:10px;align-items:center;">
+            <input id="chat-text" class="inp" style="flex:1;" placeholder="พิมพ์ข้อความ...">
+            <label class="btn btn-ghost btn-sm" style="cursor:pointer;">📷<input id="chat-img" type="file" accept="image/*" style="display:none;"></label>
+            <button id="chat-send" class="btn btn-purple btn-sm">ส่ง</button>
+          </div>
+          <p id="chat-img-name" style="font-size:10px;color:#6b7280;margin-top:4px;"></p>
+        </div>
+        <div class="card card-yellow">
+          <div class="card-title" style="color:#facc15;">🔑 คีย์ส่วนรวมของห้องนี้</div>
+          <p style="font-size:11px;color:#6b7280;margin-bottom:10px;">คีย์ที่สร้างจากช่องนี้เท่านั้นที่นับเป็นคีย์ส่วนรวม</p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+            <input id="room-name" class="inp" placeholder="ชื่อโปรเจกต์">
+            <input id="room-maxuses" class="inp" type="number" value="1" placeholder="จำนวนคนใช้">
+          </div>
+          <textarea id="room-script" class="inp" rows="2" placeholder="สคริปต์สำหรับคีย์ส่วนรวม"></textarea>
+          <button id="room-gen" class="btn btn-sm" style="background:rgba(234,179,8,0.2);color:#facc15;border:1px solid rgba(234,179,8,0.3);margin-top:8px;margin-bottom:12px;">➕ สร้างคีย์ส่วนรวม</button>
+          <table class="tbl"><thead><tr><th>Key</th><th>โปรเจกต์</th><th>สร้างโดย</th><th>ผู้ใช้</th></tr></thead><tbody id="room-keys"></tbody></table>
+        </div>
       </div>
-      <textarea id="room-script" rows="3" placeholder="วางสคริปต์สำหรับคีย์ส่วนรวม" class="w-full bg-[#0c0c10] border border-gray-700 rounded-xl p-3 text-sm font-mono text-purple-300 mb-3"></textarea>
-      <button id="room-gen" class="bg-yellow-700 hover:bg-yellow-600 px-5 py-2.5 rounded-xl text-sm font-bold mb-4">➕ สร้างคีย์ส่วนรวม</button>
-      <div class="overflow-x-auto"><table class="w-full text-left text-xs">
-        <thead><tr class="border-b border-gray-800 text-gray-400"><th class="py-2 px-2">Key</th><th class="px-2">โปรเจกต์</th><th class="px-2">สร้างโดย</th><th class="px-2 text-center">ผู้ใช้</th></tr></thead>
-        <tbody id="room-keys"></tbody></table></div>
-    </div>
-  </div>
 
-  <!-- หมวด: บัญชีแอดมิน (เฉพาะ owner) -->
-  <div data-tab="admins" class="tab-panel">
-    <div class="bg-[#14141d] border border-red-500/40 p-5 rounded-2xl mb-5">
-      <h2 class="text-lg font-bold mb-3 text-red-400">👑 [OWNER ONLY] จัดการบัญชีแอดมิน</h2>
-      <div class="flex flex-wrap gap-2 mb-3">
-        <input id="u-name" placeholder="ชื่อผู้ใช้ใหม่" class="flex-1 min-w-[140px] bg-[#0c0c10] border border-gray-700 rounded-lg px-3 py-2 text-sm">
-        <input id="u-pass" placeholder="รหัสผ่าน (อย่างน้อย 4 ตัว)" class="flex-1 min-w-[140px] bg-[#0c0c10] border border-gray-700 rounded-lg px-3 py-2 text-sm">
-        <button id="u-create" class="bg-red-700 px-4 py-2 rounded-lg text-sm font-bold">➕ สร้างบัญชีแอดมิน</button>
+      <!-- ประวัติลูกค้า -->
+      <div class="tab-panel" data-tab="custlog">
+        <div class="card">
+          <div class="card-title grad-text">🕑 ประวัติลูกค้า/คีย์</div>
+          <p style="font-size:11px;color:#6b7280;margin-bottom:10px;">บันทึกการสร้าง/ลบ/ระงับ/รีเซ็ตคีย์ และตรวจจับการแกะสคริปต์</p>
+          <div class="tbl-scroll"><table class="tbl"><thead><tr><th>เวลา</th><th>ผู้ใช้</th><th>การกระทำ</th><th>รายละเอียด</th></tr></thead><tbody id="cust-log-list"></tbody></table></div>
+        </div>
       </div>
-      <div class="overflow-x-auto"><table class="w-full text-left text-sm">
-        <thead><tr class="border-b border-gray-800 text-gray-400 text-xs"><th class="py-2 px-2">ชื่อผู้ใช้</th><th class="px-2">สิทธิ์</th><th class="px-2">สร้างเมื่อ</th><th class="px-2 text-center">จัดการ</th></tr></thead>
-        <tbody id="u-list"></tbody></table></div>
-    </div>
-  </div>
 
-  <!-- หมวด: ประวัติระบบทั้งหมด (เฉพาะ owner — ลึกกว่าของแอดมิน) -->
-  <div data-tab="syslog" class="tab-panel">
-    <div class="bg-[#14141d] border border-red-500/40 p-5 rounded-2xl">
-      <h2 class="text-lg font-bold mb-3 text-red-400">🔒 [OWNER ONLY] ประวัติระบบทั้งหมด</h2>
-      <p class="text-xs text-gray-500 mb-3">รวมทุกอย่าง: ล็อกอิน/ล็อกเอาท์ การสร้าง-ลบบัญชีแอดมิน และประวัติคีย์ทั้งหมด — ดูได้ลึกกว่าแอดมินทั่วไป</p>
-      <div class="overflow-x-auto max-h-96 overflow-y-auto"><table class="w-full text-left text-xs">
-        <thead><tr class="border-b border-gray-800 text-gray-400"><th class="py-2 px-2">เวลา</th><th class="px-2">ผู้ใช้</th><th class="px-2">การกระทำ</th><th class="px-2">รายละเอียด</th></tr></thead>
-        <tbody id="audit-list"></tbody></table></div>
-    </div>
-  </div>
+      <!-- บัญชีแอดมิน (owner) -->
+      <div class="tab-panel" data-tab="admins">
+        <div class="card card-red">
+          <div class="card-title" style="color:#f87171;">👑 [OWNER ONLY] จัดการบัญชีแอดมิน</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+            <input id="u-name" class="inp" style="flex:1;min-width:140px;" placeholder="ชื่อผู้ใช้ใหม่">
+            <input id="u-pass" class="inp" style="flex:1;min-width:140px;" placeholder="รหัสผ่าน (4+ ตัว)">
+            <button id="u-create" class="btn btn-red">➕ สร้างบัญชี</button>
+          </div>
+          <div class="tbl-wrap"><table class="tbl"><thead><tr><th>ชื่อผู้ใช้</th><th>สิทธิ์</th><th>สร้างเมื่อ</th><th>จัดการ</th></tr></thead><tbody id="u-list"></tbody></table></div>
+        </div>
+      </div>
 
+      <!-- ประวัติระบบ (owner) -->
+      <div class="tab-panel" data-tab="syslog">
+        <div class="card card-red">
+          <div class="card-title" style="color:#f87171;">🔒 [OWNER ONLY] ประวัติระบบทั้งหมด</div>
+          <p style="font-size:11px;color:#6b7280;margin-bottom:10px;">รวมทุกอย่าง: ล็อกอิน ลบบัญชีแอดมิน และทุกการกระทำในระบบ</p>
+          <div class="tbl-scroll"><table class="tbl"><thead><tr><th>เวลา</th><th>ผู้ใช้</th><th>การกระทำ</th><th>รายละเอียด</th></tr></thead><tbody id="audit-list"></tbody></table></div>
+        </div>
+      </div>
+
+    </div>
+  </main>
 </div>
 
 <script>
+
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt = t => t ? new Date(t).toLocaleString('th-TH') : '-';
@@ -512,6 +685,232 @@ if (TOKEN) {
     if (r.ok) { ME = r.me; afterLogin(); } else { showLogin(''); }
   });
 } else { showLogin(''); }
+
+
+// ---- Override showApp/showLogin for new layout ----
+function showApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('layout').style.display = 'flex';
+}
+function showLogin(msg) {
+  document.getElementById('layout').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  if (msg !== undefined) $('l-err').textContent = msg;
+}
+
+// ---- Override buildTabs / switchTab for sidebar nav ----
+function buildTabs(isOwner) {
+  document.getElementById('owner-nav').style.display = isOwner ? 'block' : 'none';
+  document.querySelectorAll('.nav-item').forEach(b => b.onclick = () => {
+    switchTab(b.dataset.tab);
+    // close mobile sidebar
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebar-overlay').classList.remove('show');
+  });
+  switchTab('create');
+}
+function switchTab(id) {
+  document.querySelectorAll('.tab-panel').forEach(p => {
+    p.classList.toggle('active', p.dataset.tab === id);
+  });
+  document.querySelectorAll('.nav-item').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab === id);
+  });
+  if (window.__chatPoll) { clearInterval(window.__chatPoll); window.__chatPoll = null; }
+  if (id === 'custlog') refreshCustLog();
+  if (id === 'admins') refreshUsers();
+  if (id === 'syslog') refreshAudit();
+  if (id === 'chat') { refreshChat(); window.__chatPoll = setInterval(refreshChat, 4000); }
+}
+
+// ---- Override afterLogin for new UI ----
+const _origAfterLogin = afterLogin;
+function afterLogin() {
+  $('me-name').textContent = ME.username;
+  $('me-role').textContent = ME.role === 'owner' ? '👑 เจ้าของระบบ' : '🛡️ แอดมิน';
+  $('user-avatar-letter').textContent = ME.username[0].toUpperCase();
+  const isOwner = ME.role === 'owner';
+  buildTabs(isOwner);
+  showApp();
+  refresh();
+  if (window.__poll) clearInterval(window.__poll);
+  window.__poll = setInterval(refresh, 5000);
+}
+
+// ---- Hamburger (mobile) ----
+document.getElementById('hamburger').onclick = () => {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('show');
+};
+document.getElementById('sidebar-overlay').onclick = () => {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('show');
+};
+
+// ---- Announcement cooldown (non-owner: 3 per burst, 10s cooldown) ----
+let annBurst = 0, annCooldownUntil = 0, annCooldownTimer = null;
+const _origAnnounceBtn = $('announce-btn');
+_origAnnounceBtn.onclick = async () => {
+  const isOwner = ME.role === 'owner';
+  if (!isOwner) {
+    if (Date.now() < annCooldownUntil) {
+      const s = Math.ceil((annCooldownUntil - Date.now()) / 1000);
+      $('ann-cooldown-txt').textContent = `⏳ รอ ${s} วินาที ก่อนส่งได้อีก`;
+      return;
+    }
+    annBurst++;
+    if (annBurst >= 3) {
+      annCooldownUntil = Date.now() + 10000;
+      annBurst = 0;
+      // show cooldown bar
+      const bar = $('ann-cooldown-bar'); bar.style.display = 'block';
+      const fill = $('ann-cooldown-fill');
+      let start = Date.now();
+      if (annCooldownTimer) clearInterval(annCooldownTimer);
+      annCooldownTimer = setInterval(() => {
+        const elapsed = Date.now() - start;
+        const pct = Math.max(0, 100 - (elapsed / 10000) * 100);
+        fill.style.width = pct + '%';
+        const remaining = Math.ceil((annCooldownUntil - Date.now()) / 1000);
+        $('ann-cooldown-txt').textContent = remaining > 0 ? `⏳ คูลดาวน์ ${remaining} วิ (ส่งแล้ว 3 ครั้ง)` : '';
+        if (elapsed >= 10000) { clearInterval(annCooldownTimer); bar.style.display = 'none'; $('ann-cooldown-txt').textContent = ''; }
+      }, 100);
+    }
+  }
+  const text = $('announcement-text').value.trim();
+  if (!text) return $('ann-cooldown-txt').textContent = 'พิมพ์ข้อความก่อน';
+  const soundOn = $('ann-sound-on').checked;
+  const r = await api('announce', { text, sound: soundOn ? $('ann-sound-id').value : '', allowReply: $('ann-reply-on').checked });
+  if (!r.ok) return $('ann-cooldown-txt').textContent = r.msg || 'ส่งไม่สำเร็จ';
+  $('announcement-text').value = '';
+  if (!isOwner) $('ann-cooldown-txt').textContent = `✅ ส่งแล้ว (${annBurst}/3 ครั้งในรอบนี้)`;
+  else $('ann-cooldown-txt').textContent = '✅ ส่งประกาศแล้ว';
+  setTimeout(() => { if ($('ann-cooldown-txt')) $('ann-cooldown-txt').textContent = ''; }, 3000);
+};
+
+// ---- Override render for new badge/button styles ----
+const _origRender = render;
+render = function() {
+  const { keys, now, onlineMs } = DATA;
+  const rows = [];
+  keys.forEach(k => Object.entries(k.users || {}).forEach(([h, u]) => rows.push({ k, h, u })));
+  rows.sort((a, b) => b.u.lastSeen - a.u.lastSeen);
+  const on = rows.filter(r => now - r.u.lastSeen < onlineMs).length;
+  $('st-online').textContent = on; $('st-keys').textContent = keys.length;
+
+  $('players').innerHTML = rows.length ? rows.map(({ k, h, u }) => {
+    const online = now - u.lastSeen < onlineMs;
+    return `<tr>
+      <td>${online ? '<span class="badge badge-green pulse">● ออนไลน์</span>' : '<span class="badge badge-gray">● ออฟไลน์</span>'}</td>
+      <td style="font-weight:600;">${esc(u.username)}</td>
+      <td style="color:#6b7280;">${esc(u.userId)}</td>
+      <td style="color:#6b7280;">${esc(u.placeId)}</td>
+      <td style="color:#4b5563;font-size:10px;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(u.jobId)}">${esc(u.jobId)}</td>
+      <td><span style="font-family:monospace;color:#facc15;font-size:11px;">${esc(k.key)}</span></td>
+      <td style="color:#6b7280;font-size:11px;">${fmt(u.lastSeen)}</td>
+      <td style="white-space:nowrap;">
+        <button data-p="${esc(u.placeId)}" data-j="${esc(u.jobId)}" data-k="${esc(k.key)}" class="btn btn-purple btn-sm warp-join-btn" style="margin-right:4px;">🚀 จอยเลย</button>
+        <button data-p="${esc(u.placeId)}" data-j="${esc(u.jobId)}" class="btn btn-ghost btn-sm warp-copy-btn" title="คัดลอกสคริปต์วาร์ปสำรอง">📋</button>
+      </td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="8" style="text-align:center;color:#4b5563;padding:24px;">ยังไม่มีใครรัน NVEX Loader</td></tr>';
+
+  document.querySelectorAll('.warp-join-btn').forEach(b => b.onclick = async () => {
+    const link = `roblox://experiences/start?placeId=${b.dataset.p}&gameInstanceId=${b.dataset.j}`;
+    const a = document.createElement('a'); a.href = link; a.click();
+    if (b.dataset.k) await api('notify-key', { key: b.dataset.k });
+  });
+  document.querySelectorAll('.warp-copy-btn').forEach(b => b.onclick = async () => {
+    const code = `game:GetService("TeleportService"):TeleportToPlaceInstance(${b.dataset.p}, "${b.dataset.j}", game.Players.LocalPlayer)`;
+    await navigator.clipboard.writeText(code);
+    alert('คัดลอกสคริปต์วาร์ปสำรองแล้ว');
+  });
+
+  $('keys').innerHTML = keys.length ? keys.map(k => {
+    const expired = k.expiresAt && now > k.expiresAt;
+    const st = k.banned ? '<span class="badge badge-red">ระงับ</span>' : expired ? '<span class="badge badge-red">หมดอายุ</span>' : '<span class="badge badge-green">ใช้งานได้</span>';
+    const tamperBadge = (k.tamper || []).length ? `<span class="badge badge-red" title="${esc(k.tamper.map(t=>t.username).join(', '))}">🚨${k.tamper.length}</span>` : '';
+    const roomBadge = k.room ? '<span class="badge badge-indigo">ห้องแชท</span>' : '';
+    return `<tr data-k="${esc(k.key)}">
+      <td><span style="font-family:monospace;color:#facc15;font-size:11px;">${esc(k.key)}</span> ${st} ${tamperBadge} ${roomBadge}</td>
+      <td style="color:#a78bfa;">${esc(k.name)}</td>
+      <td style="font-size:11px;color:#9ca3af;">${durLabel(k.durationDays)}<br><span style="color:#4b5563;">${k.activatedAt ? (k.expiresAt ? fmt(k.expiresAt) : 'ตลอดชีพ') : 'ยังไม่เริ่มใช้'}</span></td>
+      <td style="text-align:center;font-weight:700;color:#4ade80;">${Object.keys(k.users).length}/${k.maxUses}</td>
+      <td style="font-size:11px;color:#6b7280;">${esc(k.createdBy || '-')}</td>
+      <td style="white-space:nowrap;">
+        <button data-a="copy" class="btn btn-ghost btn-sm" style="margin-right:3px;">📋 โค้ด</button>
+        <button data-a="reset" class="btn btn-ghost btn-sm" style="margin-right:3px;">รีเซ็ต</button>
+        <button data-a="ban" class="btn btn-sm" style="background:rgba(234,179,8,0.15);color:#facc15;border:1px solid rgba(234,179,8,0.2);margin-right:3px;">${k.banned ? 'ปลด' : 'ระงับ'}</button>
+        <button data-a="delete" class="btn btn-sm" style="background:rgba(220,38,38,0.15);color:#f87171;border:1px solid var(--border-red);">ลบ</button>
+      </td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="6" style="text-align:center;color:#4b5563;padding:24px;">ยังไม่มีคีย์ในระบบ NVEX</td></tr>';
+};
+
+// Override refreshUsers for new style
+const _origRefreshUsers = refreshUsers;
+refreshUsers = async function() {
+  const r = await api('users/list');
+  if (!r.ok) return;
+  $('u-list').innerHTML = r.users.map(u => `<tr>
+    <td style="font-weight:600;">${esc(u.username)}</td>
+    <td>${u.role === 'owner' ? '<span class="badge badge-red">👑 เจ้าของ</span>' : '<span class="badge badge-purple">🛡️ แอดมิน</span>'}</td>
+    <td style="color:#6b7280;font-size:11px;">${fmt(u.createdAt)}</td>
+    <td>${u.role === 'owner' ? '-' : `<button data-u="${esc(u.username)}" class="btn btn-sm u-del" style="background:rgba(220,38,38,0.15);color:#f87171;border:1px solid var(--border-red);">ลบ</button>`}</td>
+  </tr>`).join('') || '<tr><td colspan="4" style="text-align:center;color:#4b5563;padding:20px;">ยังไม่มีบัญชีแอดมิน</td></tr>';
+  document.querySelectorAll('.u-del').forEach(b => b.onclick = async () => {
+    if (!confirm('ลบบัญชี ' + b.dataset.u + ' ?')) return;
+    await api('users/delete', { username: b.dataset.u }); refreshUsers();
+  });
+};
+
+// Override logs for new style
+const _origRefreshCustLog = refreshCustLog;
+refreshCustLog = async function() {
+  const r = await api('logs');
+  if (!r.ok) return;
+  const actionColor = a => ({create_key:'badge-green',delete_key:'badge-red',ban_key:'badge-red',unban_key:'badge-yellow',reset_key:'badge-yellow',tamper_detected:'badge-red',announcement:'badge-purple',customer_reply:'badge-indigo'}[a] || 'badge-gray');
+  $('cust-log-list').innerHTML = r.logs.map(l => `<tr>
+    <td style="color:#6b7280;font-size:10px;white-space:nowrap;">${fmt(l.t)}</td>
+    <td style="font-weight:600;">${esc(l.user)}</td>
+    <td><span class="badge ${actionColor(l.action)}">${esc(l.action)}</span></td>
+    <td style="color:#9ca3af;font-size:11px;">${esc(l.detail)}</td>
+  </tr>`).join('') || '<tr><td colspan="4" style="text-align:center;color:#4b5563;padding:20px;">ยังไม่มีประวัติ</td></tr>';
+};
+
+const _origRefreshAudit = refreshAudit;
+refreshAudit = async function() {
+  const r = await api('audit');
+  if (!r.ok) return;
+  $('audit-list').innerHTML = r.logs.map(l => `<tr>
+    <td style="color:#6b7280;font-size:10px;white-space:nowrap;">${fmt(l.t)}</td>
+    <td style="font-weight:600;">${esc(l.user)}</td>
+    <td><span class="badge badge-gray">${esc(l.action)}</span></td>
+    <td style="color:#9ca3af;font-size:11px;">${esc(l.detail)}</td>
+  </tr>`).join('') || '<tr><td colspan="4" style="text-align:center;color:#4b5563;padding:20px;">ยังไม่มีประวัติ</td></tr>';
+};
+
+// Override chat
+const _origRefreshChat = refreshChat;
+refreshChat = async function() {
+  const r = await api('chat/list');
+  if (!r.ok) return;
+  $('chat-box').innerHTML = r.messages.map(m => {
+    const mine = m.user === ME.username;
+    const readers = (m.readBy || []).filter(u => u !== m.user);
+    return `<div class="chat-msg ${mine ? 'mine' : 'other'}">
+      <div class="chat-meta">${esc(m.user)} · ${fmt(m.t)}</div>
+      <div class="chat-bubble">
+        ${m.text ? `<div>${esc(m.text)}</div>` : ''}
+        ${m.image ? `<img src="${m.image}" style="max-height:160px;border-radius:8px;margin-top:6px;">` : ''}
+      </div>
+      ${readers.length ? `<div style="font-size:10px;color:#4b5563;margin-top:2px;">✅ ${readers.map(esc).join(', ')}</div>` : ''}
+    </div>`;
+  }).join('') || '<div style="text-align:center;color:#4b5563;font-size:12px;padding:40px 0;">ยังไม่มีข้อความ</div>';
+  $('chat-box').scrollTop = $('chat-box').scrollHeight;
+  refreshRoomKeys();
+};
+
 </script>
 </body>
-</html>
+  </html>
