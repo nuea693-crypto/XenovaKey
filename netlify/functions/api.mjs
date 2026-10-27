@@ -1,8 +1,9 @@
 import { getStore } from "@netlify/blobs";
 
-const DAY = 864e5, ONLINE_MS = 90e3, SESSION_MS = 7 * DAY;
+const DAY = 864e5, ONLINE_MS = 90e3, SESSION_MS = 30 * DAY;
 const OWNER_USERNAME = "nyvexhub"; // ชื่อผู้ใช้เจ้าของระบบ (เปลี่ยนได้ตามต้องการ)
-const CUSTOMER_ACTIONS = new Set(["create_key", "delete_key", "ban_key", "unban_key", "reset_key", "tamper_detected", "announcement"]);
+const CUSTOMER_ACTIONS = new Set(["create_key", "delete_key", "ban_key", "unban_key", "reset_key", "tamper_detected", "announcement", "customer_reply"]);
+const MAX_IMAGE_LEN = 400000; // ~300KB
 const store = () => getStore({ name: "nvex", consistency: "strong" });
 const json = (o, s = 200) => new Response(JSON.stringify(o), { status: s, headers: { "content-type": "application/json" } });
 const clip = (v, n) => String(v ?? "").slice(0, n);
@@ -61,17 +62,44 @@ local function call(path,body)
   if ok then return res end
   return {ok=false,msg="เชื่อมต่อเซิร์ฟเวอร์ไม่ได้"}
 end
-local function showBanner(text)
+local function showBanner(text,soundId,allowReply,k,h)
   pcall(function()
     local sg=Instance.new("ScreenGui") sg.Name="NVEX_Announce" sg.ResetOnSpawn=false
     pcall(function() sg.Parent=CoreGui end) if not sg.Parent then sg.Parent=lp:WaitForChild("PlayerGui") end
-    local f=Instance.new("Frame",sg) f.Size=UDim2.new(1,0,0,50) f.Position=UDim2.new(0,0,-0.1,0)
-    f.BackgroundColor3=Color3.fromRGB(120,40,255) f.BorderSizePixel=0
-    local t=Instance.new("TextLabel",f) t.Size=UDim2.new(1,0,1,0) t.BackgroundTransparency=1
-    t.Text="📢 "..tostring(text) t.TextColor3=Color3.new(1,1,1) t.Font=Enum.Font.GothamBold t.TextSize=16
-    f:TweenPosition(UDim2.new(0,0,0,0),"Out","Quad",0.5,true)
-    task.wait(8)
-    f:TweenPosition(UDim2.new(0,0,-0.1,0),"In","Quad",0.5,true)
+    local card=Instance.new("Frame",sg)
+    card.Size=UDim2.new(0,380,0,allowReply and 112 or 72)
+    card.Position=UDim2.new(0.5,-190,0,-160)
+    card.BackgroundColor3=Color3.fromRGB(20,16,35) card.BorderSizePixel=0
+    Instance.new("UICorner",card).CornerRadius=UDim.new(0,16)
+    local grad=Instance.new("UIGradient",card)
+    grad.Color=ColorSequence.new({ColorSequenceKeypoint.new(0,Color3.fromRGB(130,45,255)),ColorSequenceKeypoint.new(1,Color3.fromRGB(255,60,170))})
+    grad.Rotation=45 grad.Transparency=NumberSequence.new({NumberSequenceKeypoint.new(0,0.82),NumberSequenceKeypoint.new(1,0.82)})
+    local stroke=Instance.new("UIStroke",card) stroke.Color=Color3.new(1,1,1) stroke.Transparency=0.7 stroke.Thickness=1.5
+    local icon=Instance.new("TextLabel",card) icon.Size=UDim2.new(0,40,0,40) icon.Position=UDim2.new(0,14,0,14)
+    icon.BackgroundTransparency=1 icon.Text="📢" icon.TextSize=28
+    local title=Instance.new("TextLabel",card) title.Size=UDim2.new(1,-70,0,20) title.Position=UDim2.new(0,64,0,10)
+    title.BackgroundTransparency=1 title.TextXAlignment=Enum.TextXAlignment.Left title.Text="ประกาศจากแอดมิน NVEX"
+    title.TextColor3=Color3.new(1,1,1) title.Font=Enum.Font.GothamBold title.TextSize=14
+    local msg=Instance.new("TextLabel",card) msg.Size=UDim2.new(1,-80,0,26) msg.Position=UDim2.new(0,64,0,32)
+    msg.BackgroundTransparency=1 msg.TextXAlignment=Enum.TextXAlignment.Left msg.TextWrapped=true
+    msg.Text=tostring(text) msg.TextColor3=Color3.fromRGB(230,225,255) msg.Font=Enum.Font.Gotham msg.TextSize=13
+    if soundId and soundId~="" then
+      pcall(function() local snd=Instance.new("Sound",card) snd.SoundId="rbxassetid://"..tostring(soundId) snd.Volume=3 snd:Play() snd.Ended:Connect(function() snd:Destroy() end) end)
+    end
+    if allowReply then
+      local rb=Instance.new("TextBox",card) rb.Size=UDim2.new(1,-80,0,28) rb.Position=UDim2.new(0,64,0,68)
+      rb.BackgroundColor3=Color3.fromRGB(10,8,20) rb.TextColor3=Color3.new(1,1,1) rb.PlaceholderText="พิมพ์ตอบกลับแล้วกด Enter..."
+      rb.Font=Enum.Font.Gotham rb.TextSize=12 Instance.new("UICorner",rb).CornerRadius=UDim.new(0,8)
+      rb.FocusLost:Connect(function(enter)
+        if enter and rb.Text~="" then
+          call("/api/announce-reply",{key=k,hwid=h,username=lp.Name,text=rb.Text})
+          rb.Text="✅ ส่งแล้ว" task.wait(1) pcall(function() rb.Text="" end)
+        end
+      end)
+    end
+    card:TweenPosition(UDim2.new(0.5,-190,0,20),"Out","Back",0.6,true)
+    task.wait(allowReply and 14 or 8)
+    card:TweenPosition(UDim2.new(0.5,-190,0,-160),"In","Quad",0.5,true)
     task.wait(0.6) sg:Destroy()
   end)
 end
@@ -81,7 +109,9 @@ local function pollAnnounce(k,h)
       task.wait(6)
       local res=call("/api/poll-commands",{key=k,hwid=h})
       if res and res.ok and res.commands then
-        for _,c in ipairs(res.commands) do if c.type=="announcement" then showBanner(c.text) end end
+        for _,c in ipairs(res.commands) do
+          if c.type=="announcement" then showBanner(c.text,c.soundId,c.allowReply,k,h) end
+        end
       end
     end
   end)
@@ -217,6 +247,29 @@ export default async (req) => {
       return json({ ok: true, logs: recs.slice(0, 150) });
     }
 
+    // -- แชททีม (ทุกบัญชีคุยกันได้) --
+    if (path === "/admin/chat/list") {
+      const { blobs } = await s.list({ prefix: "chat:", limit: 80 });
+      const recs = (await Promise.all(blobs.slice(-80).map(x => s.get(x.key, { type: "json" })))).filter(Boolean);
+      recs.sort((a, c) => a.t - c.t);
+      for (const m of recs) {
+        if (m.user !== sess.username && !(m.readBy || []).includes(sess.username)) {
+          m.readBy = [...(m.readBy || []), sess.username];
+          await s.setJSON("chat:" + m.id, m).catch(() => {});
+        }
+      }
+      return json({ ok: true, messages: recs });
+    }
+    if (path === "/admin/chat/send") {
+      const text = clip(b.text, 500);
+      const image = typeof b.image === "string" && b.image.startsWith("data:image/") ? b.image : null;
+      if (!text.trim() && !image) return json({ ok: false, msg: "พิมพ์ข้อความหรือแนบรูปก่อน" });
+      if (image && image.length > MAX_IMAGE_LEN) return json({ ok: false, msg: "รูปใหญ่เกินไป (ไม่เกิน ~300KB)" });
+      const id = (1e15 - Date.now()) + ":" + hex(4);
+      await s.setJSON("chat:" + id, { id, t: Date.now(), user: sess.username, text, image, readBy: [sess.username] });
+      return json({ ok: true });
+    }
+
     // -- จัดการคีย์สคริปต์ (ทุกบัญชีสิทธิ์เท่ากัน) --
     if (path === "/admin/list") {
       const { blobs } = await s.list({ prefix: "k:" });
@@ -237,22 +290,24 @@ export default async (req) => {
           maxUses: Math.min(Math.max(parseInt(b.maxUses) || 1, 1), 9999),
           durationDays: Math.max(parseInt(b.durationDays) || 0, 0),
           createdAt: Date.now(), activatedAt: null, expiresAt: null, banned: false, users: {},
-          createdBy: sess.username, tamper: [], commands: [],
+          createdBy: sess.username, tamper: [], commands: [], room: !!b.room,
         };
         await s.setJSON("k:" + key, rec);
         out.push(key);
       }
-      await log(s, sess.username, "create_key", `${count} key(s): ${clip(b.name, 60)}`);
+      await log(s, sess.username, "create_key", `${count} key(s)${b.room ? " [ห้องแชท]" : ""}: ${clip(b.name, 60)}`);
       return json({ ok: true, keys: out });
     }
     if (path === "/admin/announce") {
       const text = clip(b.text, 200);
       if (!text.trim()) return json({ ok: false, msg: "พิมพ์ข้อความก่อน" });
+      const soundId = b.sound ? clip(String(b.sound).replace(/\D/g, ""), 30) : "";
+      const allowReply = !!b.allowReply;
       const { blobs } = await s.list({ prefix: "k:" });
       for (const blob of blobs) {
         const kRec = await s.get(blob.key, { type: "json" });
         if (kRec && !kRec.banned) {
-          kRec.commands = [...(kRec.commands || []), { type: "announcement", text }].slice(-10);
+          kRec.commands = [...(kRec.commands || []), { type: "announcement", text, soundId, allowReply }].slice(-10);
           await s.setJSON(blob.key, kRec);
         }
       }
@@ -281,6 +336,14 @@ export default async (req) => {
       await s.setJSON(tk, tr);
       await log(s, "system", "tamper_detected", `${tr.key} by ${clip(tb.username, 40)}`);
     }
+    return json({ ok: true });
+  }
+
+  // ---------- ลูกค้าตอบกลับประกาศ ----------
+  if (path === "/announce-reply" && req.method === "POST") {
+    const rb = await req.json().catch(() => ({}));
+    const text = clip(rb.text, 300);
+    if (text.trim()) await log(s, clip(rb.username, 40) || "ลูกค้า", "customer_reply", text);
     return json({ ok: true });
   }
 
