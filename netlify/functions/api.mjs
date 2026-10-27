@@ -19,6 +19,59 @@ async function hashPw(pw, salt) {
   return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, "0")).join("");
 }
 
+// ---------- IP helper ----------
+function getIp(req) {
+  return req.headers.get("x-nf-client-connection-ip")
+    || (req.headers.get("x-forwarded-for") || "").split(",")[0].trim()
+    || "unknown";
+}
+
+// ---------- Rate limiting / brute-force lockout (กันยิงเว็บ, กันบอท) ----------
+async function rateLimit(s, bucket, ip, max, windowMs) {
+  const key = "rl:" + bucket + ":" + safe(ip);
+  const now = Date.now();
+  const rec = await s.get(key, { type: "json" }).catch(() => null);
+  if (!rec || now - rec.start > windowMs) { await s.setJSON(key, { start: now, count: 1 }); return true; }
+  if (rec.count >= max) return false;
+  rec.count++;
+  await s.setJSON(key, rec);
+  return true;
+}
+async function guardLock(s, bucket, ip) {
+  const rec = await s.get("lock:" + bucket + ":" + safe(ip), { type: "json" }).catch(() => null);
+  return !(rec && rec.until && Date.now() < rec.until);
+}
+async function guardFail(s, bucket, ip, maxFails, failWindowMs, lockMs, onLock) {
+  const key = "lock:" + bucket + ":" + safe(ip);
+  const now = Date.now();
+  const rec = (await s.get(key, { type: "json" }).catch(() => null)) || { fails: 0, start: now };
+  if (now - rec.start > failWindowMs) { rec.fails = 0; rec.start = now; }
+  rec.fails++;
+  if (rec.fails >= maxFails) { rec.until = now + lockMs; if (onLock) await onLock(); }
+  await s.setJSON(key, rec);
+}
+async function guardReset(s, bucket, ip) { await s.delete("lock:" + bucket + ":" + safe(ip)).catch(() => {}); }
+
+async function log(s, user, action, detail) {
+  await s.setJSON("log:" + (1e15 - Date.now()) + ":" + hex(4), { t: Date.now(), user, action, detail: clip(detail, 200) });
+}
+
+// ---------- ตัวเข้ารหัสแบบใช้ซ้ำ (XOR + escape) ----------
+function xorEnc(str, key) {
+  const bytes = new TextEncoder().encode(str);
+  let out = "";
+  for (let i = 0; i < bytes.length; i++) out += "\\" + String(bytes[i] ^ key[i % key.length]).padStart(3, "0");
+  return out;
+}
+function randKey(n = 12) { return [...crypto.getRandomValues(new Uint8Array(n))].map(b => 1 + (b % 254)); }
+function wrapObfuscated(code) {
+  const k = randKey();
+  return `local function _d(s,k) local b=(bit32 or bit).bxor local o={} for i=1,#s do o[i]=string.char(b(s:byte(i),k[(i-1)%#k+1])) end return table.concat(o) end
+local _k={${k.join(",")}}
+local _f=loadstring(_d("${xorEnc(code, k)}",_k))
+if _f then _f() end`;
+}
+
 function check(r, hwid) {
   if (!r) return "ไม่พบคีย์นี้";
   if (r.banned) return "คีย์ถูกระงับ";
@@ -33,10 +86,6 @@ async function auth(req, s) {
   const sess = await s.get("sess:" + safe(clip(token, 80)), { type: "json" });
   if (!sess || sess.exp < Date.now()) return null;
   return sess;
-}
-
-async function log(s, user, action, detail) {
-  await s.setJSON("log:" + (1e15 - Date.now()) + ":" + hex(4), { t: Date.now(), user, action, detail: clip(detail, 200) });
 }
 
 // ---------- Loader (ตัวโหลดฝั่งลูกค้า) ----------
@@ -163,12 +212,18 @@ export default async (req) => {
   const url = new URL(req.url);
   const path = url.pathname.replace(/^\/api/, "");
   const s = store();
+  const ip = getIp(req);
 
-  if (path === "/loader")
-    return new Response(LOADER.replaceAll("__BASE__", url.origin), { headers: { "content-type": "text/plain; charset=utf-8" } });
+  // ---------- ขอ loader (obfuscated เต็มรูปแบบ กันเปิดดูตรงๆ) ----------
+  if (path === "/loader") {
+    if (!(await rateLimit(s, "loader", ip, 20, 60000))) return json({ ok: false, msg: "too many requests" }, 429);
+    const code = LOADER.replaceAll("__BASE__", url.origin);
+    return new Response(wrapObfuscated(code), { headers: { "content-type": "text/plain; charset=utf-8" } });
+  }
 
   // ---------- Auth (บัญชีผู้ใช้เว็บ) ----------
   if (path === "/auth/login" && req.method === "POST") {
+    if (!(await guardLock(s, "login", ip))) return json({ ok: false, msg: "ลองรหัสผิดหลายครั้งเกินไป ลองใหม่อีก 10 นาที" }, 429);
     const b = await req.json().catch(() => ({}));
     const username = safe(clip(b.username, 40)).toLowerCase();
     const password = clip(b.password, 100);
@@ -182,12 +237,17 @@ export default async (req) => {
         rec = { username: OWNER_USERNAME, role: "owner", salt, passHash: await hashPw(password, salt), createdAt: Date.now(), createdBy: "system" };
         await s.setJSON(uk, rec);
       } else {
+        await guardFail(s, "login", ip, 8, 5 * 60000, 10 * 60000, () => log(s, "system", "bot_blocked", `login brute-force จาก IP ${ip}`));
         return json({ ok: false, msg: "ไม่พบผู้ใช้นี้ หรือรหัสผ่านไม่ถูกต้อง" });
       }
     } else {
       const h = await hashPw(password, rec.salt);
-      if (h !== rec.passHash) return json({ ok: false, msg: "ไม่พบผู้ใช้นี้ หรือรหัสผ่านไม่ถูกต้อง" });
+      if (h !== rec.passHash) {
+        await guardFail(s, "login", ip, 8, 5 * 60000, 10 * 60000, () => log(s, "system", "bot_blocked", `login brute-force จาก IP ${ip}`));
+        return json({ ok: false, msg: "ไม่พบผู้ใช้นี้ หรือรหัสผ่านไม่ถูกต้อง" });
+      }
     }
+    await guardReset(s, "login", ip);
     const token = hex(24);
     await s.setJSON("sess:" + token, { username: rec.username, role: rec.role, exp: Date.now() + SESSION_MS });
     await log(s, rec.username, "login", "");
@@ -207,7 +267,6 @@ export default async (req) => {
     const kk = "k:" + clip(b.key, 40);
     const isOwner = sess.role === "owner";
 
-    // -- จัดการบัญชีแอดมิน (เฉพาะ owner) --
     if (path === "/admin/users/list") {
       if (!isOwner) return json({ ok: false, msg: "เฉพาะเจ้าของระบบ" }, 403);
       const { blobs } = await s.list({ prefix: "u:" });
@@ -236,7 +295,6 @@ export default async (req) => {
       return json({ ok: true });
     }
 
-    // -- ประวัติ: ลูกค้า (ทุกคนเห็น) กับ ระบบทั้งหมด (เฉพาะ owner) --
     if (path === "/admin/logs" || path === "/admin/audit") {
       const isFullAudit = path === "/admin/audit";
       if (isFullAudit && !isOwner) return json({ ok: false, msg: "เฉพาะเจ้าของระบบ" }, 403);
@@ -247,7 +305,6 @@ export default async (req) => {
       return json({ ok: true, logs: recs.slice(0, 150) });
     }
 
-    // -- แชททีม (ทุกบัญชีคุยกันได้) --
     if (path === "/admin/chat/list") {
       const { blobs } = await s.list({ prefix: "chat:", limit: 80 });
       const recs = (await Promise.all(blobs.slice(-80).map(x => s.get(x.key, { type: "json" })))).filter(Boolean);
@@ -270,7 +327,6 @@ export default async (req) => {
       return json({ ok: true });
     }
 
-    // -- จัดการคีย์สคริปต์ (ทุกบัญชีสิทธิ์เท่ากัน) --
     if (path === "/admin/list") {
       const { blobs } = await s.list({ prefix: "k:" });
       const recs = (await Promise.all(blobs.map(x => s.get(x.key, { type: "json" })))).filter(Boolean);
@@ -327,6 +383,7 @@ export default async (req) => {
 
   // ---------- กับดักตรวจจับการแกะสคริปต์ ----------
   if (path === "/trap" && req.method === "POST") {
+    if (!(await rateLimit(s, "trap", ip, 20, 60000))) return json({ ok: false }, 429);
     const tb = await req.json().catch(() => ({}));
     const tk = "k:" + clip(tb.key, 40).toUpperCase().trim();
     const tr = await s.get(tk, { type: "json" });
@@ -341,6 +398,7 @@ export default async (req) => {
 
   // ---------- ลูกค้าตอบกลับประกาศ ----------
   if (path === "/announce-reply" && req.method === "POST") {
+    if (!(await rateLimit(s, "reply", ip, 10, 60000))) return json({ ok: false }, 429);
     const rb = await req.json().catch(() => ({}));
     const text = clip(rb.text, 300);
     if (text.trim()) await log(s, clip(rb.username, 40) || "ลูกค้า", "customer_reply", text);
@@ -349,6 +407,7 @@ export default async (req) => {
 
   // ---------- ดึงประกาศ (ฝั่งลูกค้า) ----------
   if (path === "/poll-commands" && req.method === "POST") {
+    if (!(await rateLimit(s, "poll", ip, 40, 60000))) return json({ ok: false, msg: "too many requests" }, 429);
     const b = await req.json().catch(() => ({}));
     const kk = "k:" + clip(b.key, 40).toUpperCase().trim();
     const r = await s.get(kk, { type: "json" });
@@ -361,14 +420,26 @@ export default async (req) => {
     return json({ ok: true, commands: [] });
   }
 
-  // ---------- ฝั่งสคริปต์ลูกค้า ----------
+  // ---------- ฝั่งสคริปต์ลูกค้า (verify/heartbeat) ----------
   if (req.method !== "POST" || (path !== "/verify" && path !== "/heartbeat")) return json({ ok: false, msg: "not found" }, 404);
+
+  if (!(await rateLimit(s, "vh", ip, 60, 60000))) return json({ ok: false, msg: "too many requests" }, 429);
+  if (path === "/verify" && !(await guardLock(s, "keyfail", ip)))
+    return json({ ok: false, msg: "ตรวจพบความพยายามเดาคีย์ผิดปกติ ถูกบล็อกชั่วคราว" }, 429);
+
   const b = await req.json().catch(() => ({}));
   const key = "k:" + clip(b.key, 40).toUpperCase().trim();
   const hwid = clip(b.hwid, 128) || "unknown";
   const r = await s.get(key, { type: "json" });
   const err = check(r, hwid);
-  if (err) return json({ ok: false, msg: err });
+  if (err) {
+    // คีย์ไม่พบ/ผิด ถือเป็นสัญญาณของการเดาคีย์ (บอท) เฉพาะตอน verify
+    if (path === "/verify" && err === "ไม่พบคีย์นี้") {
+      await guardFail(s, "keyfail", ip, 15, 5 * 60000, 15 * 60000, () => log(s, "system", "bot_blocked", `เดาคีย์รัว ๆ จาก IP ${ip}`));
+    }
+    return json({ ok: false, msg: err });
+  }
+  if (path === "/verify") await guardReset(s, "keyfail", ip);
 
   const now = Date.now();
   if (!r.activatedAt) {
