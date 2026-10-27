@@ -3,27 +3,29 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Xenova Key Panel</title>
+<title>NVEX Loader | Owner &amp; Admin Control Panel</title>
 <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-[#0b0b0f] text-white min-h-screen font-sans p-4 md:p-6">
 
 <!-- หน้าล็อกอิน -->
 <div id="login-screen" class="max-w-sm mx-auto mt-20 bg-[#14141d] border border-purple-900/50 rounded-2xl p-6">
-  <h1 class="text-xl font-extrabold text-center mb-1 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">🛡️ XENOVA KEY PANEL</h1>
+  <h1 class="text-xl font-extrabold text-center mb-1 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">🛡️ NVEX CONTROL PANEL</h1>
   <p class="text-xs text-gray-500 text-center mb-5">เข้าสู่ระบบด้วยบัญชีของคุณ</p>
-  <input id="l-user" placeholder="ชื่อผู้ใช้ (owner สำหรับเจ้าของระบบ)" class="w-full bg-[#0c0c10] border border-gray-700 rounded-xl px-4 py-3 text-sm mb-3">
+  <input id="l-user" placeholder="ชื่อผู้ใช้" class="w-full bg-[#0c0c10] border border-gray-700 rounded-xl px-4 py-3 text-sm mb-3">
   <input id="l-pass" type="password" placeholder="รหัสผ่าน" class="w-full bg-[#0c0c10] border border-gray-700 rounded-xl px-4 py-3 text-sm mb-3">
   <button id="l-btn" class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 font-bold py-3 rounded-xl text-sm">เข้าสู่ระบบ</button>
   <p id="l-err" class="text-red-400 text-xs text-center mt-3"></p>
-  <p class="text-xs text-gray-600 text-center mt-4">เจ้าของระบบใช้ชื่อ <b>owner</b> กับรหัสผ่านที่ตั้งไว้ใน Netlify (ADMIN_PASSWORD) ล็อกอินครั้งแรกได้เลย บัญชีอื่นต้องให้เจ้าของระบบสร้างให้</p>
 </div>
 
 <!-- แอปหลัก -->
 <div id="app" class="max-w-6xl mx-auto hidden">
 
-  <div class="bg-gradient-to-r from-[#181824] to-[#25183d] border border-[#7a28ff]/60 p-5 rounded-2xl mb-5 flex justify-between items-center flex-wrap gap-2">
-    <h1 class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">🛡️ XENOVA KEY PANEL</h1>
+  <div class="bg-gradient-to-r from-[#181824] to-[#25183d] border border-[#7a28ff]/60 p-5 rounded-2xl mb-4 flex justify-between items-center flex-wrap gap-2">
+    <div>
+      <h1 class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">🛡️ NVEX — ADMIN COMMAND CENTER</h1>
+      <p class="text-xs text-purple-300 mt-1">ระบบควบคุมส่วนกลางค่าย NVEX</p>
+    </div>
     <div class="text-right text-xs">
       <div class="text-green-400 font-bold">🟢 ออนไลน์ตอนนี้: <span id="st-online">0</span> คน</div>
       <div class="text-gray-400">คีย์ทั้งหมด: <span id="st-keys">0</span></div>
@@ -31,92 +33,158 @@
     </div>
   </div>
 
-  <!-- จัดการผู้ใช้เว็บ (เฉพาะ owner) -->
-  <div id="owner-panel" class="hidden bg-[#14141d] border border-yellow-900/50 p-5 rounded-2xl mb-5">
-    <h2 class="text-lg font-bold mb-3">👑 จัดการบัญชีผู้ใช้เว็บ (เฉพาะเจ้าของระบบเห็น)</h2>
-    <div class="flex flex-wrap gap-2 mb-3">
-      <input id="u-name" placeholder="ชื่อผู้ใช้ใหม่" class="flex-1 min-w-[140px] bg-[#0c0c10] border border-gray-700 rounded-lg px-3 py-2 text-sm">
-      <input id="u-pass" placeholder="รหัสผ่าน (อย่างน้อย 4 ตัว)" class="flex-1 min-w-[140px] bg-[#0c0c10] border border-gray-700 rounded-lg px-3 py-2 text-sm">
-      <button id="u-create" class="bg-yellow-700 px-4 py-2 rounded-lg text-sm font-bold">➕ สร้างบัญชี</button>
+  <!-- แถบหมวดเมนู -->
+  <div id="tabbar" class="flex flex-wrap gap-2 mb-5 bg-[#14141d] border border-gray-800 rounded-2xl p-2"></div>
+
+  <!-- หมวด: เจนคีย์ -->
+  <div data-tab="create" class="tab-panel">
+    <div class="bg-[#14141d] border border-gray-800 p-5 rounded-2xl mb-5 grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div>
+        <label class="block text-xs font-semibold text-purple-300 mb-2">1. จำนวนคนใช้สูงสุดต่อคีย์</label>
+        <input id="max-uses" type="number" value="1" min="1" max="9999" class="w-full bg-[#0c0c10] border border-gray-700 rounded-xl px-4 py-3 text-sm">
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-purple-300 mb-2">2. อายุคีย์</label>
+        <select id="duration" class="w-full bg-[#0c0c10] border border-gray-700 rounded-xl px-4 py-3 text-sm">
+          <option value="1">1 วัน</option><option value="2">2 วัน</option><option value="3">3 วัน</option>
+          <option value="4">4 วัน</option><option value="5">5 วัน</option><option value="6">6 วัน</option>
+          <option value="7">7 วัน</option><option value="30">1 เดือน</option><option value="60">2 เดือน</option>
+          <option value="90">3 เดือน</option><option value="120">4 เดือน</option><option value="150">5 เดือน</option>
+          <option value="365">1 ปี</option><option value="0">ถาวร (ตลอดชีพ)</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-purple-300 mb-2">จำนวนคีย์ที่จะเจน / ชื่อโปรเจกต์</label>
+        <div class="flex gap-2">
+          <input id="count" type="number" value="1" min="1" max="50" class="w-20 bg-[#0c0c10] border border-gray-700 rounded-xl px-3 py-3 text-sm">
+          <input id="name" placeholder="ชื่อโปรเจกต์ / ลูกค้า" class="flex-1 min-w-0 bg-[#0c0c10] border border-gray-700 rounded-xl px-4 py-3 text-sm">
+        </div>
+      </div>
+      <div class="md:col-span-3">
+        <label class="block text-xs font-semibold text-purple-300 mb-2">3. วางสคริปต์หลัก (Lua) — เก็บบนเซิร์ฟเวอร์ ส่งให้เฉพาะคนที่คีย์ผ่าน</label>
+        <textarea id="script" rows="4" placeholder="print('NVEX Loader Connected!')" class="w-full bg-[#0c0c10] border border-gray-700 rounded-xl p-4 text-sm font-mono text-purple-300"></textarea>
+      </div>
+      <div class="md:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-4 bg-[#0c0c10] border border-purple-900/50 rounded-xl p-4">
+        <label class="flex items-center gap-2 text-sm"><input id="protect" type="checkbox" checked> 🛡️ ป้องกันหลายชั้น (เข้ารหัส 3 ชั้น + ตรวจจับ hook 4 จุด)</label>
+        <label class="flex items-center gap-2 text-sm"><input id="kick" type="checkbox" checked> 🚪 เตะออกจากเกมเมื่อโดนจับได้</label>
+        <div class="flex gap-2">
+          <input id="sound" placeholder="Sound ID เสียงเตือน (ไม่ใส่ก็ได้)" class="flex-1 bg-[#14141d] border border-gray-700 rounded-lg px-3 py-2 text-sm">
+          <button id="sound-test" type="button" class="bg-gray-700 px-3 py-2 rounded-lg text-xs whitespace-nowrap">🔊 ฟังตัวอย่าง</button>
+        </div>
+        <p class="md:col-span-3 text-xs text-gray-500">คนที่พยายาม hook/ดักสคริปต์ → ส่งรายงานเข้าแผง + คีย์ถูกระงับอัตโนมัติ + เล่นเสียง 4 วิ + เตะออก</p>
+      </div>
+      <button id="gen" class="md:col-span-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 font-bold py-4 rounded-xl text-sm">🚀 เจนคีย์ NVEX</button>
     </div>
-    <div class="overflow-x-auto"><table class="w-full text-left text-sm">
-      <thead><tr class="border-b border-gray-800 text-gray-400 text-xs"><th class="py-2 px-2">ชื่อผู้ใช้</th><th class="px-2">สิทธิ์</th><th class="px-2">สร้างเมื่อ</th><th class="px-2 text-center">จัดการ</th></tr></thead>
-      <tbody id="u-list"></tbody></table></div>
   </div>
 
-  <!-- สร้างคีย์ -->
-  <div class="bg-[#14141d] border border-gray-800 p-5 rounded-2xl mb-5 grid grid-cols-1 md:grid-cols-3 gap-4">
-    <div>
-      <label class="block text-xs font-semibold text-purple-300 mb-2">1. จำนวนคนใช้สูงสุดต่อคีย์</label>
-      <input id="max-uses" type="number" value="1" min="1" max="9999" class="w-full bg-[#0c0c10] border border-gray-700 rounded-xl px-4 py-3 text-sm">
-    </div>
-    <div>
-      <label class="block text-xs font-semibold text-purple-300 mb-2">2. อายุคีย์</label>
-      <select id="duration" class="w-full bg-[#0c0c10] border border-gray-700 rounded-xl px-4 py-3 text-sm">
-        <option value="1">1 วัน</option><option value="2">2 วัน</option><option value="3">3 วัน</option>
-        <option value="4">4 วัน</option><option value="5">5 วัน</option><option value="6">6 วัน</option>
-        <option value="7">7 วัน</option><option value="30">1 เดือน</option><option value="60">2 เดือน</option>
-        <option value="90">3 เดือน</option><option value="120">4 เดือน</option><option value="150">5 เดือน</option>
-        <option value="365">1 ปี</option><option value="0">ถาวร (ตลอดชีพ)</option>
-      </select>
-    </div>
-    <div>
-      <label class="block text-xs font-semibold text-purple-300 mb-2">จำนวนคีย์ที่จะเจน / ชื่อโปรเจกต์</label>
+  <!-- หมวด: ประกาศ -->
+  <div data-tab="announce" class="tab-panel">
+    <div class="bg-[#14141d] border border-purple-500/40 p-5 rounded-2xl mb-5">
+      <h2 class="text-lg font-bold text-purple-400 mb-3">📢 ส่งประกาศถึงลูกค้าทุกคนที่ออนไลน์</h2>
+      <p class="text-xs text-gray-500 mb-3">ขึ้นเป็นแถบข้อความบนจอ 8 วินาทีแล้วหายไปเอง</p>
       <div class="flex gap-2">
-        <input id="count" type="number" value="1" min="1" max="50" class="w-20 bg-[#0c0c10] border border-gray-700 rounded-xl px-3 py-3 text-sm">
-        <input id="name" placeholder="ชื่อโปรเจกต์ / ลูกค้า" class="flex-1 min-w-0 bg-[#0c0c10] border border-gray-700 rounded-xl px-4 py-3 text-sm">
+        <input id="announcement-text" placeholder="เช่น อัปเดตสคริปต์เวอร์ชันใหม่แล้ว โหลดใหม่ได้เลย" class="flex-1 bg-[#0c0c10] border border-gray-700 rounded-xl px-4 py-2.5 text-sm">
+        <button id="announce-btn" class="bg-purple-600 hover:bg-purple-700 px-6 py-2.5 rounded-xl text-sm font-bold">ส่งประกาศ</button>
       </div>
     </div>
-    <div class="md:col-span-3">
-      <label class="block text-xs font-semibold text-purple-300 mb-2">3. วางสคริปต์หลัก (Lua) — เก็บบนเซิร์ฟเวอร์ ส่งให้เฉพาะคนที่คีย์ผ่าน</label>
-      <textarea id="script" rows="4" placeholder="print('Hello')" class="w-full bg-[#0c0c10] border border-gray-700 rounded-xl p-4 text-sm font-mono text-purple-300"></textarea>
+  </div>
+
+  <!-- หมวด: ผู้เล่นออนไลน์ -->
+  <div data-tab="players" class="tab-panel">
+    <div class="bg-[#14141d] border border-gray-800 p-5 rounded-2xl mb-5">
+      <h2 class="text-lg font-bold mb-3">👁️ ใครกำลังรันสคริปต์ NVEX อยู่ (เรียลไทม์ รีเฟรชทุก 5 วิ)</h2>
+      <div class="overflow-x-auto"><table class="w-full text-left text-sm">
+        <thead><tr class="border-b border-gray-800 text-gray-400 text-xs">
+          <th class="py-2 px-3">สถานะ</th><th class="px-3">Username</th><th class="px-3">UserId</th><th class="px-3">PlaceId</th><th class="px-3">JobId</th><th class="px-3">คีย์</th><th class="px-3">เห็นล่าสุด</th><th class="px-3 text-center">วาร์ป</th></tr></thead>
+        <tbody id="players"></tbody></table></div>
     </div>
-    <div class="md:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-4 bg-[#0c0c10] border border-purple-900/50 rounded-xl p-4">
-      <label class="flex items-center gap-2 text-sm"><input id="protect" type="checkbox" checked> 🛡️ ป้องกันหลายชั้น (เข้ารหัส 3 ชั้น + ตรวจจับ hook 4 จุด)</label>
-      <label class="flex items-center gap-2 text-sm"><input id="kick" type="checkbox" checked> 🚪 เตะออกจากเกมเมื่อโดนจับได้</label>
-      <div class="flex gap-2">
-        <input id="sound" placeholder="Sound ID เสียงเตือน (ไม่ใส่ก็ได้)" class="flex-1 bg-[#14141d] border border-gray-700 rounded-lg px-3 py-2 text-sm">
-        <button id="sound-test" type="button" class="bg-gray-700 px-3 py-2 rounded-lg text-xs whitespace-nowrap">🔊 ฟังตัวอย่าง</button>
+  </div>
+
+  <!-- หมวด: คีย์ทั้งหมด -->
+  <div data-tab="keys" class="tab-panel">
+    <div class="bg-[#14141d] border border-gray-800 p-5 rounded-2xl mb-5">
+      <h2 class="text-lg font-bold mb-3">📋 รายการคีย์ทั้งหมดในระบบ NVEX</h2>
+      <div class="overflow-x-auto"><table class="w-full text-left text-sm">
+        <thead><tr class="border-b border-gray-800 text-gray-400 text-xs">
+          <th class="py-2 px-3">Key Code</th><th class="px-3">โปรเจกต์</th><th class="px-3">อายุ / หมดเมื่อ</th><th class="px-3 text-center">ผู้ใช้</th><th class="px-3">สร้างโดย</th><th class="px-3 text-center">จัดการ</th></tr></thead>
+        <tbody id="keys"></tbody></table></div>
+    </div>
+  </div>
+
+  <!-- หมวด: ประวัติลูกค้า (ทุกคนเห็น) -->
+  <div data-tab="custlog" class="tab-panel">
+    <div class="bg-[#14141d] border border-gray-800 p-5 rounded-2xl mb-5">
+      <h2 class="text-lg font-bold mb-3">🕑 ประวัติลูกค้า/คีย์ (ดูได้ทุกบัญชี)</h2>
+      <p class="text-xs text-gray-500 mb-3">บันทึกการสร้าง/ลบ/ระงับ/รีเซ็ตคีย์ และการตรวจจับการแกะสคริปต์</p>
+      <div class="overflow-x-auto max-h-96 overflow-y-auto"><table class="w-full text-left text-xs">
+        <thead><tr class="border-b border-gray-800 text-gray-400"><th class="py-2 px-2">เวลา</th><th class="px-2">ผู้ใช้</th><th class="px-2">การกระทำ</th><th class="px-2">รายละเอียด</th></tr></thead>
+        <tbody id="cust-log-list"></tbody></table></div>
+    </div>
+  </div>
+
+  <!-- หมวด: บัญชีแอดมิน (เฉพาะ owner) -->
+  <div data-tab="admins" class="tab-panel">
+    <div class="bg-[#14141d] border border-red-500/40 p-5 rounded-2xl mb-5">
+      <h2 class="text-lg font-bold mb-3 text-red-400">👑 [OWNER ONLY] จัดการบัญชีแอดมิน</h2>
+      <div class="flex flex-wrap gap-2 mb-3">
+        <input id="u-name" placeholder="ชื่อผู้ใช้ใหม่" class="flex-1 min-w-[140px] bg-[#0c0c10] border border-gray-700 rounded-lg px-3 py-2 text-sm">
+        <input id="u-pass" placeholder="รหัสผ่าน (อย่างน้อย 4 ตัว)" class="flex-1 min-w-[140px] bg-[#0c0c10] border border-gray-700 rounded-lg px-3 py-2 text-sm">
+        <button id="u-create" class="bg-red-700 px-4 py-2 rounded-lg text-sm font-bold">➕ สร้างบัญชีแอดมิน</button>
       </div>
-      <p class="md:col-span-3 text-xs text-gray-500">คนที่พยายาม hook/ดักสคริปต์ → ส่งรายงานเข้าแผง + คีย์ถูกระงับอัตโนมัติ + เล่นเสียง 4 วิ + เตะออก (ปลดคีย์ที่โดนจับผิดได้ที่ปุ่ม "ระงับ")</p>
+      <div class="overflow-x-auto"><table class="w-full text-left text-sm">
+        <thead><tr class="border-b border-gray-800 text-gray-400 text-xs"><th class="py-2 px-2">ชื่อผู้ใช้</th><th class="px-2">สิทธิ์</th><th class="px-2">สร้างเมื่อ</th><th class="px-2 text-center">จัดการ</th></tr></thead>
+        <tbody id="u-list"></tbody></table></div>
     </div>
-    <button id="gen" class="md:col-span-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 font-bold py-4 rounded-xl text-sm">🚀 เจนคีย์</button>
   </div>
 
-  <!-- ใครกำลังรันอยู่ -->
-  <div class="bg-[#14141d] border border-gray-800 p-5 rounded-2xl mb-5">
-    <h2 class="text-lg font-bold mb-3">👁️ ใครกำลังรันสคริปต์ (เรียลไทม์ รีเฟรชทุก 5 วิ)</h2>
-    <div class="overflow-x-auto"><table class="w-full text-left text-sm">
-      <thead><tr class="border-b border-gray-800 text-gray-400 text-xs">
-        <th class="py-2 px-3">สถานะ</th><th class="px-3">Username</th><th class="px-3">UserId</th><th class="px-3">PlaceId</th><th class="px-3">JobId</th><th class="px-3">คีย์</th><th class="px-3">เห็นล่าสุด</th><th class="px-3 text-center">วาร์ป</th></tr></thead>
-      <tbody id="players"></tbody></table></div>
+  <!-- หมวด: ประวัติระบบทั้งหมด (เฉพาะ owner — ลึกกว่าของแอดมิน) -->
+  <div data-tab="syslog" class="tab-panel">
+    <div class="bg-[#14141d] border border-red-500/40 p-5 rounded-2xl">
+      <h2 class="text-lg font-bold mb-3 text-red-400">🔒 [OWNER ONLY] ประวัติระบบทั้งหมด</h2>
+      <p class="text-xs text-gray-500 mb-3">รวมทุกอย่าง: ล็อกอิน/ล็อกเอาท์ การสร้าง-ลบบัญชีแอดมิน และประวัติคีย์ทั้งหมด — ดูได้ลึกกว่าแอดมินทั่วไป</p>
+      <div class="overflow-x-auto max-h-96 overflow-y-auto"><table class="w-full text-left text-xs">
+        <thead><tr class="border-b border-gray-800 text-gray-400"><th class="py-2 px-2">เวลา</th><th class="px-2">ผู้ใช้</th><th class="px-2">การกระทำ</th><th class="px-2">รายละเอียด</th></tr></thead>
+        <tbody id="audit-list"></tbody></table></div>
+    </div>
   </div>
 
-  <!-- คีย์ทั้งหมด -->
-  <div class="bg-[#14141d] border border-gray-800 p-5 rounded-2xl mb-5">
-    <h2 class="text-lg font-bold mb-3">📋 คีย์ทั้งหมด</h2>
-    <div class="overflow-x-auto"><table class="w-full text-left text-sm">
-      <thead><tr class="border-b border-gray-800 text-gray-400 text-xs">
-        <th class="py-2 px-3">Key</th><th class="px-3">โปรเจกต์</th><th class="px-3">อายุ / หมดเมื่อ</th><th class="px-3 text-center">ผู้ใช้</th><th class="px-3">สร้างโดย</th><th class="px-3 text-center">จัดการ</th></tr></thead>
-      <tbody id="keys"></tbody></table></div>
-  </div>
-
-  <!-- ประวัติการใช้งาน (เฉพาะ owner) -->
-  <div id="audit-panel" class="hidden bg-[#14141d] border border-gray-800 p-5 rounded-2xl">
-    <h2 class="text-lg font-bold mb-3">🕑 ประวัติการใช้งานระบบ (เฉพาะเจ้าของระบบเห็น)</h2>
-    <div class="overflow-x-auto max-h-80 overflow-y-auto"><table class="w-full text-left text-xs">
-      <thead><tr class="border-b border-gray-800 text-gray-400"><th class="py-2 px-2">เวลา</th><th class="px-2">ผู้ใช้</th><th class="px-2">การกระทำ</th><th class="px-2">รายละเอียด</th></tr></thead>
-      <tbody id="audit-list"></tbody></table></div>
-  </div>
 </div>
 
 <script>
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt = t => t ? new Date(t).toLocaleString('th-TH') : '-';
-let TOKEN = sessionStorage.getItem('xenova_token') || '';
+let TOKEN = sessionStorage.getItem('nvex_token') || '';
 let ME = { username: '', role: '' };
 let DATA = { keys: [], now: Date.now(), onlineMs: 90000 };
+
+const TABS = [
+  { id: 'create', label: '🔑 สร้างคีย์', ownerOnly: false },
+  { id: 'announce', label: '📢 ประกาศ', ownerOnly: false },
+  { id: 'players', label: '👁️ ผู้เล่นออนไลน์', ownerOnly: false },
+  { id: 'keys', label: '📋 คีย์ทั้งหมด', ownerOnly: false },
+  { id: 'custlog', label: '🕑 ประวัติลูกค้า', ownerOnly: false },
+  { id: 'admins', label: '👑 บัญชีแอดมิน', ownerOnly: true },
+  { id: 'syslog', label: '🔒 ประวัติระบบ', ownerOnly: true },
+];
+
+function buildTabs(isOwner) {
+  $('tabbar').innerHTML = TABS.filter(t => !t.ownerOnly || isOwner).map(t =>
+    `<button data-tab-btn="${t.id}" class="tab-btn px-4 py-2 rounded-xl text-sm font-bold bg-[#0c0c10] text-gray-400">${t.label}</button>`).join('');
+  document.querySelectorAll('.tab-btn').forEach(b => b.onclick = () => switchTab(b.dataset.tabBtn));
+  switchTab('create');
+}
+function switchTab(id) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('hidden', p.dataset.tab !== id));
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    const active = b.dataset.tabBtn === id;
+    b.classList.toggle('bg-gradient-to-r', active); b.classList.toggle('from-purple-600', active); b.classList.toggle('to-indigo-600', active);
+    b.classList.toggle('text-white', active); b.classList.toggle('bg-[#0c0c10]', !active); b.classList.toggle('text-gray-400', !active);
+  });
+  if (id === 'custlog') refreshCustLog();
+  if (id === 'admins') refreshUsers();
+  if (id === 'syslog') refreshAudit();
+}
 
 async function api(p, body) {
   const r = await fetch('/api/admin/' + p, {
@@ -129,11 +197,11 @@ async function api(p, body) {
 }
 
 function showApp() { $('login-screen').classList.add('hidden'); $('app').classList.remove('hidden'); }
-function showLogin(msg) { $('app').classList.add('hidden'); $('login-screen').classList.remove('hidden'); if (msg) $('l-err').textContent = msg; }
+function showLogin(msg) { $('app').classList.add('hidden'); $('login-screen').classList.remove('hidden'); if (msg !== undefined) $('l-err').textContent = msg; }
 
 function doLogout(callServer) {
   if (callServer) fetch('/api/auth/logout', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ token: TOKEN }) }).catch(() => {});
-  TOKEN = ''; sessionStorage.removeItem('xenova_token'); showLogin('');
+  TOKEN = ''; sessionStorage.removeItem('nvex_token'); showLogin('');
 }
 
 $('l-btn').onclick = async () => {
@@ -142,7 +210,7 @@ $('l-btn').onclick = async () => {
   if (!username || !password) return $('l-err').textContent = 'กรอกให้ครบ';
   const r = await fetch('/api/auth/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ username, password }) }).then(x => x.json());
   if (!r.ok) return $('l-err').textContent = r.msg || 'เข้าสู่ระบบไม่สำเร็จ';
-  TOKEN = r.token; sessionStorage.setItem('xenova_token', TOKEN);
+  TOKEN = r.token; sessionStorage.setItem('nvex_token', TOKEN);
   ME = { username: r.username, role: r.role };
   afterLogin();
 };
@@ -152,16 +220,14 @@ function afterLogin() {
   $('me-name').textContent = ME.username;
   $('me-role').textContent = ME.role === 'owner' ? 'เจ้าของระบบ' : 'แอดมิน';
   const isOwner = ME.role === 'owner';
-  $('owner-panel').classList.toggle('hidden', !isOwner);
-  $('audit-panel').classList.toggle('hidden', !isOwner);
+  buildTabs(isOwner);
   showApp();
   refresh();
-  if (isOwner) { refreshUsers(); refreshAudit(); }
   if (window.__poll) clearInterval(window.__poll);
-  window.__poll = setInterval(() => { refresh(); if (ME.role === 'owner') refreshAudit(); }, 5000);
+  window.__poll = setInterval(refresh, 5000);
 }
 
-// ---------- ผู้ใช้เว็บ ----------
+// ---------- บัญชีแอดมิน (owner) ----------
 async function refreshUsers() {
   const r = await api('users/list');
   if (!r.ok) return;
@@ -169,7 +235,7 @@ async function refreshUsers() {
     <td class="py-2 px-2 font-bold">${esc(u.username)}</td>
     <td class="px-2">${u.role === 'owner' ? '👑 เจ้าของระบบ' : 'แอดมิน'}</td>
     <td class="px-2 text-gray-400">${fmt(u.createdAt)}</td>
-    <td class="px-2 text-center">${u.role === 'owner' ? '-' : `<button data-u="${esc(u.username)}" class="u-del bg-red-700 px-2 py-1 text-xs rounded-lg">ลบ</button>`}</td></tr>`).join('') || '<tr><td colspan="4" class="py-3 text-center text-gray-500">ยังไม่มีบัญชีเพิ่มเติม</td></tr>';
+    <td class="px-2 text-center">${u.role === 'owner' ? '-' : `<button data-u="${esc(u.username)}" class="u-del bg-red-700 px-2 py-1 text-xs rounded-lg">ลบ</button>`}</td></tr>`).join('') || '<tr><td colspan="4" class="py-3 text-center text-gray-500">ยังไม่มีบัญชีแอดมินเพิ่มเติม</td></tr>';
   document.querySelectorAll('.u-del').forEach(b => b.onclick = async () => {
     if (!confirm('ลบบัญชี ' + b.dataset.u + ' ?')) return;
     await api('users/delete', { username: b.dataset.u }); refreshUsers();
@@ -179,10 +245,17 @@ $('u-create').onclick = async () => {
   const username = $('u-name').value.trim(), password = $('u-pass').value;
   const r = await api('users/create', { username, password });
   if (!r.ok) return alert(r.msg || 'ผิดพลาด');
-  $('u-name').value = ''; $('u-pass').value = ''; alert('สร้างบัญชีสำเร็จ'); refreshUsers();
+  $('u-name').value = ''; $('u-pass').value = ''; alert('สร้างบัญชีแอดมินสำเร็จ'); refreshUsers();
 };
 
-// ---------- ประวัติ ----------
+// ---------- ประวัติลูกค้า (ทุกคน) กับ ประวัติระบบ (owner) ----------
+async function refreshCustLog() {
+  const r = await api('logs');
+  if (!r.ok) return;
+  $('cust-log-list').innerHTML = r.logs.map(l => `<tr class="border-b border-gray-800/40">
+    <td class="py-1.5 px-2 text-gray-400">${fmt(l.t)}</td><td class="px-2 font-bold">${esc(l.user)}</td>
+    <td class="px-2 text-purple-300">${esc(l.action)}</td><td class="px-2 text-gray-400">${esc(l.detail)}</td></tr>`).join('') || '<tr><td colspan="4" class="py-3 text-center text-gray-500">ยังไม่มีประวัติ</td></tr>';
+}
 async function refreshAudit() {
   const r = await api('audit');
   if (!r.ok) return;
@@ -190,6 +263,15 @@ async function refreshAudit() {
     <td class="py-1.5 px-2 text-gray-400">${fmt(l.t)}</td><td class="px-2 font-bold">${esc(l.user)}</td>
     <td class="px-2 text-purple-300">${esc(l.action)}</td><td class="px-2 text-gray-400">${esc(l.detail)}</td></tr>`).join('') || '<tr><td colspan="4" class="py-3 text-center text-gray-500">ยังไม่มีประวัติ</td></tr>';
 }
+
+// ---------- ประกาศ ----------
+$('announce-btn').onclick = async () => {
+  const text = $('announcement-text').value.trim();
+  if (!text) return alert('พิมพ์ข้อความก่อน');
+  const r = await api('announce', { text });
+  if (!r.ok) return alert(r.msg || 'ส่งไม่สำเร็จ');
+  $('announcement-text').value = ''; alert('ส่งประกาศแล้ว');
+};
 
 // ---------- เสียงทดสอบ ----------
 $('sound-test').onclick = () => {
@@ -210,13 +292,9 @@ function protect(src, o) {
   const snd = o.sound ? `pcall(function() local s=Instance.new("Sound",workspace) s.SoundId="rbxassetid://${o.sound}" s.Volume=10 s.Looped=true s:Play() end)` : '';
   const kick = o.kick ? `pcall(function() game:GetService("Players").LocalPlayer:Kick("Tampering detected") end)` : '';
   const junk = `local ${J1}=0 for ${J2}=1,3 do ${J1}=${J1}+${J2} end`;
-  // ชั้นที่ 3 (ในสุด): สคริปต์จริง + ตรวจ hook ก่อนรัน
   const L3 = `local ${T},${C},${X}=...\n${C}()\n${junk}\n${src}`;
-  // ชั้นที่ 2: ถอดชั้น 3 + ตรวจ hook
   const L2 = `local ${T},${C},${X},${D}=...\n${C}()\n${junk}\nlocal f=loadstring(${D}("${enc(L3, k3)}",{${k3}}))\n${C}()\nif f then f(${T},${C},${X}) end`;
-  // ชั้นที่ 1: ถอดชั้น 2 + ตรวจ hook
   const L1 = `local ${T},${C},${X},${D}=...\n${C}()\nlocal f=loadstring(${D}("${enc(L2, k2)}",{${k2}}))\n${C}()\nif f then f(${T},${C},${X},${D}) end`;
-  // ชั้นนอกสุด: ตัวตรวจจับ + ตัวลงโทษ + ถอดชั้น 1
   return `local ${X}=__X
 local function ${D}(s,k) local b=(bit32 or bit).bxor local o={} for i=1,#s do o[i]=string.char(b(s:byte(i),k[(i-1)%#k+1])) end return table.concat(o) end
 local function ${T}(why)
@@ -266,7 +344,7 @@ function render() {
       <td class="px-3 font-mono text-yellow-400 text-xs">${esc(k.key)}</td>
       <td class="px-3 text-gray-400 text-xs">${fmt(u.lastSeen)}</td>
       <td class="px-3 text-center"><button data-p="${esc(u.placeId)}" data-j="${esc(u.jobId)}" class="warp-btn bg-indigo-700 px-2 py-1 text-xs rounded-lg">📍 วาร์ป</button></td></tr>`;
-  }).join('') : '<tr><td colspan="8" class="py-4 text-center text-gray-500">ยังไม่มีใครรัน</td></tr>';
+  }).join('') : '<tr><td colspan="8" class="py-4 text-center text-gray-500">ยังไม่มีใครรัน NVEX Loader</td></tr>';
 
   document.querySelectorAll('.warp-btn').forEach(b => b.onclick = async () => {
     const code = `game:GetService("TeleportService"):TeleportToPlaceInstance(${b.dataset.p}, "${b.dataset.j}", game.Players.LocalPlayer)`;
@@ -289,7 +367,7 @@ function render() {
         <button data-a="reset" class="bg-gray-700 px-2 py-1 text-xs rounded-lg">รีเซ็ต</button>
         <button data-a="ban" class="bg-yellow-700 px-2 py-1 text-xs rounded-lg">${k.banned ? 'ปลด' : 'ระงับ'}</button>
         <button data-a="delete" class="bg-red-700 px-2 py-1 text-xs rounded-lg">ลบ</button></td></tr>`;
-  }).join('') : '<tr><td colspan="6" class="py-4 text-center text-gray-500">ยังไม่มีคีย์</td></tr>';
+  }).join('') : '<tr><td colspan="6" class="py-4 text-center text-gray-500">ยังไม่มีคีย์ในระบบ NVEX</td></tr>';
 }
 
 async function refresh() {
@@ -302,7 +380,7 @@ $('keys').addEventListener('click', async e => {
   const key = e.target.closest('tr').dataset.k;
   if (a === 'copy') {
     const code = `getgenv().Key = "${key}"\nloadstring(game:HttpGet("${location.origin}/api/loader"))()`;
-    await navigator.clipboard.writeText(code); return alert('คัดลอกโค้ดให้ลูกค้าแล้ว');
+    await navigator.clipboard.writeText(code); return alert('คัดลอกโค้ด NVEX Loader ให้ลูกค้าแล้ว');
   }
   if (a === 'delete' && !confirm('ลบคีย์นี้?')) return;
   if (a === 'reset' && !confirm('ล้างรายชื่อผู้ใช้ของคีย์นี้?')) return;
@@ -319,7 +397,7 @@ $('gen').onclick = async () => {
     count: $('count').value, name: $('name').value, script: finalScript
   });
   if (!r.ok) return alert(r.msg || 'ผิดพลาด');
-  alert('สร้างสำเร็จ:\n' + r.keys.join('\n'));
+  alert('🎉 สร้างคีย์ NVEX สำเร็จ:\n' + r.keys.join('\n'));
   refresh();
 };
 
