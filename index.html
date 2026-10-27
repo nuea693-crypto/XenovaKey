@@ -381,17 +381,23 @@ const enc = (txt, k) => { const b = new TextEncoder().encode(txt); let o = ''; f
 
 function protect(src, o) {
   const names = Array.from({ length: 10 }, rn);
-  const [T, C, X, D, J1, J2] = names;
-  const k1 = rk(), k2 = rk(), k3 = rk();
+  const [T, C, X, D] = names;
+  const keys = Array.from({ length: 3 }, rk);
   const snd = o.sound ? `pcall(function() local s=Instance.new("Sound",workspace) s.SoundId="rbxassetid://${o.sound}" s.Volume=10 s.Looped=true s:Play() end)` : '';
   const kick = o.kick ? `pcall(function() game:GetService("Players").LocalPlayer:Kick("Tampering detected") end)` : '';
-  const junk = `local ${J1}=0 for ${J2}=1,3 do ${J1}=${J1}+${J2} end`;
-  const L3 = `local ${T},${C},${X}=...\n${C}()\n${junk}\n${src}`;
-  const L2 = `local ${T},${C},${X},${D}=...\n${C}()\n${junk}\nlocal f=loadstring(${D}("${enc(L3, k3)}",{${k3}}))\n${C}()\nif f then f(${T},${C},${X}) end`;
-  const L1 = `local ${T},${C},${X},${D}=...\n${C}()\nlocal f=loadstring(${D}("${enc(L2, k2)}",{${k2}}))\n${C}()\nif f then f(${T},${C},${X},${D}) end`;
+  const junk = () => `local ${rn()}=0 for ${rn()}=1,3 do end`;
+
+  // 3 ชั้น: เกิน 3 ชั้นขนาดไฟล์จะบวมเร็วมาก (ทดสอบแล้วสคริปต์ 1.4KB พอทำ 5 ชั้นกลายเป็น 1.5MB ซึ่งใหญ่เกินที่ executor ส่วนใหญ่รับไหว)
+  let layer = `local ${T},${C},${X}=...\n${C}()\n${junk()}\n${src}`;
+  for (let i = 1; i >= 0; i--) {
+    const k = keys[i];
+    layer = `local ${T},${C},${X},${D}=...\n${C}()\n${junk()}\nlocal f=loadstring(${D}("${enc(layer, k)}",{${k}}))\n${C}()\nif f then f(${T},${C},${X},${D}) end`;
+  }
+
   return `local ${X}=__X
 local function ${D}(s,k) local b=(bit32 or bit).bxor local o={} for i=1,#s do o[i]=string.char(b(s:byte(i),k[(i-1)%#k+1])) end return table.concat(o) end
 local function ${T}(why)
+  warn("[NVEX SECURITY] ตรวจพบความพยายามแกะ/ดักสคริปต์ การกระทำนี้ถูกบันทึกแล้ว และคีย์นี้ถูกระงับการใช้งานทันที")
   pcall(function()
     if ${X} then
       local rq=(syn and syn.request) or (http and http.request) or http_request or request
@@ -410,7 +416,7 @@ local function ${C}()
   if bad then ${T}("hook") end
 end
 ${C}()
-local f=loadstring(${D}("${enc(L1, k1)}",{${k1}}))
+local f=loadstring(${D}("${enc(layer, keys[2])}",{${keys[2]}}))
 ${C}()
 if f then f(${T},${C},${X},${D}) end
 `;
