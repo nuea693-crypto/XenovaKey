@@ -1,7 +1,9 @@
 import { getStore } from "@netlify/blobs";
 
 const DAY = 864e5, ONLINE_MS = 90e3, SESSION_MS = 7 * DAY;
-const store = () => getStore({ name: "xenova", consistency: "strong" });
+const OWNER_USERNAME = "nyvexhub"; // ชื่อผู้ใช้เจ้าของระบบ (เปลี่ยนได้ตามต้องการ)
+const CUSTOMER_ACTIONS = new Set(["create_key", "delete_key", "ban_key", "unban_key", "reset_key", "tamper_detected", "announcement"]);
+const store = () => getStore({ name: "nvex", consistency: "strong" });
 const json = (o, s = 200) => new Response(JSON.stringify(o), { status: s, headers: { "content-type": "application/json" } });
 const clip = (v, n) => String(v ?? "").slice(0, n);
 const safe = v => String(v).replace(/[^\w.:\/-]/g, "");
@@ -9,7 +11,7 @@ const hex = n => [...crypto.getRandomValues(new Uint8Array(n))].map(b => b.toStr
 const genKey = () => {
   const c = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   const s = [...crypto.getRandomValues(new Uint8Array(12))].map(x => c[x % c.length]).join("");
-  return `XENOVA-${s.slice(0, 4)}-${s.slice(4, 8)}-${s.slice(8)}`;
+  return `NVEX-${s.slice(0, 4)}-${s.slice(4, 8)}-${s.slice(8)}`;
 };
 async function hashPw(pw, salt) {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(salt + ":" + pw));
@@ -40,6 +42,7 @@ async function log(s, user, action, detail) {
 const LOADER = `
 local Players=game:GetService("Players")
 local HttpService=game:GetService("HttpService")
+local CoreGui=game:GetService("CoreGui")
 local lp=Players.LocalPlayer
 local BASE="__BASE__"
 local req=(syn and syn.request) or (http and http.request) or http_request or request
@@ -58,6 +61,31 @@ local function call(path,body)
   if ok then return res end
   return {ok=false,msg="เชื่อมต่อเซิร์ฟเวอร์ไม่ได้"}
 end
+local function showBanner(text)
+  pcall(function()
+    local sg=Instance.new("ScreenGui") sg.Name="NVEX_Announce" sg.ResetOnSpawn=false
+    pcall(function() sg.Parent=CoreGui end) if not sg.Parent then sg.Parent=lp:WaitForChild("PlayerGui") end
+    local f=Instance.new("Frame",sg) f.Size=UDim2.new(1,0,0,50) f.Position=UDim2.new(0,0,-0.1,0)
+    f.BackgroundColor3=Color3.fromRGB(120,40,255) f.BorderSizePixel=0
+    local t=Instance.new("TextLabel",f) t.Size=UDim2.new(1,0,1,0) t.BackgroundTransparency=1
+    t.Text="📢 "..tostring(text) t.TextColor3=Color3.new(1,1,1) t.Font=Enum.Font.GothamBold t.TextSize=16
+    f:TweenPosition(UDim2.new(0,0,0,0),"Out","Quad",0.5,true)
+    task.wait(8)
+    f:TweenPosition(UDim2.new(0,0,-0.1,0),"In","Quad",0.5,true)
+    task.wait(0.6) sg:Destroy()
+  end)
+end
+local function pollAnnounce(k,h)
+  task.spawn(function()
+    while true do
+      task.wait(6)
+      local res=call("/api/poll-commands",{key=k,hwid=h})
+      if res and res.ok and res.commands then
+        for _,c in ipairs(res.commands) do if c.type=="announcement" then showBanner(c.text) end end
+      end
+    end
+  end)
+end
 local function start(k)
   local res=call("/api/verify",info(k))
   if not res.ok then return false,res.msg end
@@ -65,9 +93,10 @@ local function start(k)
     while true do
       task.wait(30)
       local h=call("/api/heartbeat",info(k))
-      if h.ok==false and h.msg~="เชื่อมต่อเซิร์ฟเวอร์ไม่ได้" then warn("[Xenova] "..tostring(h.msg)) break end
+      if h.ok==false and h.msg~="เชื่อมต่อเซิร์ฟเวอร์ไม่ได้" then warn("[NVEX] "..tostring(h.msg)) break end
     end
   end)
+  pollAnnounce(k,hwid())
   local f,err=loadstring(res.script)
   if f then task.spawn(f) else warn(err) end
   return true
@@ -75,18 +104,18 @@ end
 local preset=getgenv and getgenv().Key
 if preset then
   local ok,msg=start(preset)
-  if not ok then warn("[Xenova] "..tostring(msg)) end
+  if not ok then warn("[NVEX] "..tostring(msg)) end
   return
 end
 local gui=Instance.new("ScreenGui") gui.ResetOnSpawn=false
-if not pcall(function() gui.Parent=game:GetService("CoreGui") end) then gui.Parent=lp:WaitForChild("PlayerGui") end
+if not pcall(function() gui.Parent=CoreGui end) then gui.Parent=lp:WaitForChild("PlayerGui") end
 local f=Instance.new("Frame",gui) f.Size=UDim2.fromOffset(340,180) f.Position=UDim2.new(0.5,-170,0.5,-90)
 f.BackgroundColor3=Color3.fromRGB(15,15,22) f.Active=true f.Draggable=true
 Instance.new("UICorner",f).CornerRadius=UDim.new(0,12)
-local t=Instance.new("TextLabel",f) t.Size=UDim2.new(1,0,0,40) t.BackgroundTransparency=1 t.Text="Xenova - Key System"
+local t=Instance.new("TextLabel",f) t.Size=UDim2.new(1,0,0,40) t.BackgroundTransparency=1 t.Text="NVEX Loader"
 t.TextColor3=Color3.fromRGB(190,110,255) t.Font=Enum.Font.GothamBold t.TextSize=15
 local box=Instance.new("TextBox",f) box.Size=UDim2.new(1,-40,0,36) box.Position=UDim2.new(0,20,0,48)
-box.BackgroundColor3=Color3.fromRGB(25,25,35) box.TextColor3=Color3.new(1,1,1) box.PlaceholderText="XENOVA-XXXX-XXXX-XXXX"
+box.BackgroundColor3=Color3.fromRGB(25,25,35) box.TextColor3=Color3.new(1,1,1) box.PlaceholderText="NVEX-XXXX-XXXX-XXXX"
 box.Text="" box.Font=Enum.Font.Gotham box.TextSize=13 Instance.new("UICorner",box)
 local b=Instance.new("TextButton",f) b.Size=UDim2.new(1,-40,0,36) b.Position=UDim2.new(0,20,0,94)
 b.BackgroundColor3=Color3.fromRGB(110,40,230) b.TextColor3=Color3.new(1,1,1) b.Text="ตรวจสอบคีย์" b.Font=Enum.Font.GothamBold b.TextSize=13
@@ -117,11 +146,10 @@ export default async (req) => {
     const uk = "u:" + username;
     let rec = await s.get(uk, { type: "json" });
     if (!rec) {
-      // สมัครบัญชีเองไม่ได้ ยกเว้น "owner" รอบแรกสุด ที่ต้องรู้รหัสลับใน Netlify (ADMIN_PASSWORD)
       const pw = process.env.ADMIN_PASSWORD;
-      if (username === "owner" && pw && password === pw) {
+      if (username === OWNER_USERNAME && pw && password === pw) {
         const salt = hex(8);
-        rec = { username: "owner", role: "owner", salt, passHash: await hashPw(password, salt), createdAt: Date.now(), createdBy: "system" };
+        rec = { username: OWNER_USERNAME, role: "owner", salt, passHash: await hashPw(password, salt), createdAt: Date.now(), createdBy: "system" };
         await s.setJSON(uk, rec);
       } else {
         return json({ ok: false, msg: "ไม่พบผู้ใช้นี้ หรือรหัสผ่านไม่ถูกต้อง" });
@@ -149,7 +177,7 @@ export default async (req) => {
     const kk = "k:" + clip(b.key, 40);
     const isOwner = sess.role === "owner";
 
-    // -- จัดการผู้ใช้เว็บ (เฉพาะ owner) --
+    // -- จัดการบัญชีแอดมิน (เฉพาะ owner) --
     if (path === "/admin/users/list") {
       if (!isOwner) return json({ ok: false, msg: "เฉพาะเจ้าของระบบ" }, 403);
       const { blobs } = await s.list({ prefix: "u:" });
@@ -161,7 +189,7 @@ export default async (req) => {
       const username = safe(clip(b.username, 40)).toLowerCase();
       const password = clip(b.password, 100);
       if (!username || password.length < 4) return json({ ok: false, msg: "ตั้งชื่อผู้ใช้ และรหัสผ่านอย่างน้อย 4 ตัว" });
-      if (username === "owner") return json({ ok: false, msg: "ชื่อนี้ถูกใช้แล้ว" });
+      if (username === OWNER_USERNAME) return json({ ok: false, msg: "ชื่อนี้ถูกใช้แล้ว" });
       const uk = "u:" + username;
       if (await s.get(uk, { type: "json" })) return json({ ok: false, msg: "มีชื่อผู้ใช้นี้แล้ว" });
       const salt = hex(8);
@@ -172,15 +200,19 @@ export default async (req) => {
     if (path === "/admin/users/delete") {
       if (!isOwner) return json({ ok: false, msg: "เฉพาะเจ้าของระบบ" }, 403);
       const username = safe(clip(b.username, 40)).toLowerCase();
-      if (username === "owner") return json({ ok: false, msg: "ลบเจ้าของระบบไม่ได้" });
+      if (username === OWNER_USERNAME) return json({ ok: false, msg: "ลบเจ้าของระบบไม่ได้" });
       await s.delete("u:" + username);
       await log(s, sess.username, "delete_user", username);
       return json({ ok: true });
     }
-    if (path === "/admin/audit") {
-      if (!isOwner) return json({ ok: false, msg: "เฉพาะเจ้าของระบบ" }, 403);
-      const { blobs } = await s.list({ prefix: "log:", limit: 150 });
-      const recs = (await Promise.all(blobs.slice(0, 150).map(x => s.get(x.key, { type: "json" })))).filter(Boolean);
+
+    // -- ประวัติ: ลูกค้า (ทุกคนเห็น) กับ ระบบทั้งหมด (เฉพาะ owner) --
+    if (path === "/admin/logs" || path === "/admin/audit") {
+      const isFullAudit = path === "/admin/audit";
+      if (isFullAudit && !isOwner) return json({ ok: false, msg: "เฉพาะเจ้าของระบบ" }, 403);
+      const { blobs } = await s.list({ prefix: "log:", limit: 200 });
+      let recs = (await Promise.all(blobs.slice(0, 200).map(x => s.get(x.key, { type: "json" })))).filter(Boolean);
+      if (!isFullAudit) recs = recs.filter(r => CUSTOMER_ACTIONS.has(r.action));
       recs.sort((a, c) => c.t - a.t);
       return json({ ok: true, logs: recs.slice(0, 150) });
     }
@@ -201,17 +233,31 @@ export default async (req) => {
       for (let i = 0; i < count; i++) {
         const key = genKey();
         const rec = {
-          key, name: clip(b.name, 60) || "Unnamed", script,
+          key, name: clip(b.name, 60) || "NVEX Project", script,
           maxUses: Math.min(Math.max(parseInt(b.maxUses) || 1, 1), 9999),
           durationDays: Math.max(parseInt(b.durationDays) || 0, 0),
           createdAt: Date.now(), activatedAt: null, expiresAt: null, banned: false, users: {},
-          createdBy: sess.username, tamper: [],
+          createdBy: sess.username, tamper: [], commands: [],
         };
         await s.setJSON("k:" + key, rec);
         out.push(key);
       }
       await log(s, sess.username, "create_key", `${count} key(s): ${clip(b.name, 60)}`);
       return json({ ok: true, keys: out });
+    }
+    if (path === "/admin/announce") {
+      const text = clip(b.text, 200);
+      if (!text.trim()) return json({ ok: false, msg: "พิมพ์ข้อความก่อน" });
+      const { blobs } = await s.list({ prefix: "k:" });
+      for (const blob of blobs) {
+        const kRec = await s.get(blob.key, { type: "json" });
+        if (kRec && !kRec.banned) {
+          kRec.commands = [...(kRec.commands || []), { type: "announcement", text }].slice(-10);
+          await s.setJSON(blob.key, kRec);
+        }
+      }
+      await log(s, sess.username, "announcement", text);
+      return json({ ok: true });
     }
     const r = await s.get(kk, { type: "json" });
     if (!r) return json({ ok: false, msg: "ไม่พบคีย์" });
@@ -236,6 +282,20 @@ export default async (req) => {
       await log(s, "system", "tamper_detected", `${tr.key} by ${clip(tb.username, 40)}`);
     }
     return json({ ok: true });
+  }
+
+  // ---------- ดึงประกาศ (ฝั่งลูกค้า) ----------
+  if (path === "/poll-commands" && req.method === "POST") {
+    const b = await req.json().catch(() => ({}));
+    const kk = "k:" + clip(b.key, 40).toUpperCase().trim();
+    const r = await s.get(kk, { type: "json" });
+    if (r && r.commands && r.commands.length) {
+      const cmds = [...r.commands];
+      r.commands = [];
+      await s.setJSON(kk, r);
+      return json({ ok: true, commands: cmds });
+    }
+    return json({ ok: true, commands: [] });
   }
 
   // ---------- ฝั่งสคริปต์ลูกค้า ----------
