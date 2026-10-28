@@ -152,6 +152,27 @@ local function showBanner(text,soundId,allowReply,k,h)
     task.wait(0.6) sg:Destroy()
   end)
 end
+local function showOwnerJoined(owner)
+  pcall(function()
+    local sg=Instance.new("ScreenGui") sg.Name="NVEX_OwnerJoin" sg.ResetOnSpawn=false
+    pcall(function() sg.Parent=game:GetService("CoreGui") end)
+    if not sg.Parent then sg.Parent=game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui") end
+    local card=Instance.new("Frame",sg)
+    card.Size=UDim2.new(0,300,0,60) card.Position=UDim2.new(1,-320,1,-80)
+    card.BackgroundColor3=Color3.fromRGB(10,8,18) card.BorderSizePixel=0
+    Instance.new("UICorner",card).CornerRadius=UDim.new(0,10)
+    local stroke=Instance.new("UIStroke",card) stroke.Color=Color3.fromRGB(220,38,38) stroke.Thickness=1.5 stroke.Transparency=0.3
+    local icon=Instance.new("TextLabel",card) icon.Size=UDim2.new(0,40,1,0) icon.BackgroundTransparency=1
+    icon.Text="👁️" icon.TextSize=22
+    local msg=Instance.new("TextLabel",card) msg.Size=UDim2.new(1,-50,1,0) msg.Position=UDim2.new(0,44,0,0)
+    msg.BackgroundTransparency=1 msg.TextXAlignment=Enum.TextXAlignment.Left msg.TextWrapped=true
+    msg.Text="⚔️ "..tostring(owner).." เข้าสู่เซิร์ฟเวอร์แล้ว" msg.TextColor3=Color3.fromRGB(252,165,165)
+    msg.Font=Enum.Font.GothamBold msg.TextSize=12
+    card:TweenPosition(UDim2.new(1,-320,1,-80),"Out","Back",0.5,true)
+    task.wait(5) card:TweenPosition(UDim2.new(1,20,1,-80),"In","Quad",0.4,true)
+    task.wait(0.5) sg:Destroy()
+  end)
+end
 local function pollAnnounce(k,h)
   task.spawn(function()
     while true do
@@ -159,7 +180,8 @@ local function pollAnnounce(k,h)
       local res=call("/api/poll-commands",{key=k,hwid=h})
       if res and res.ok and res.commands then
         for _,c in ipairs(res.commands) do
-          if c.type=="announcement" then showBanner(c.text,c.soundId,c.allowReply,k,h) end
+          if c.type=="announcement" then showBanner(c.text,c.soundId,c.allowReply,k,h)
+          elseif c.type=="owner_joined" then showOwnerJoined(c.owner) end
         end
       end
     end
@@ -331,8 +353,10 @@ export default async (req) => {
       const { blobs } = await s.list({ prefix: "k:" });
       const recs = (await Promise.all(blobs.map(x => s.get(x.key, { type: "json" })))).filter(Boolean);
       recs.forEach(r => { r.hasScript = !!r.script; delete r.script; });
-      recs.sort((a, c) => c.createdAt - a.createdAt);
-      return json({ ok: true, now: Date.now(), onlineMs: ONLINE_MS, keys: recs, me: { username: sess.username, role: sess.role } });
+      // ส่วนตัว = เฉพาะผู้สร้าง, ส่วนรวม (room) = ทุกคนเห็น, owner เห็นทั้งหมด
+      const filtered = isOwner ? recs : recs.filter(r => r.createdBy === sess.username || !!r.room);
+      filtered.sort((a, c) => c.createdAt - a.createdAt);
+      return json({ ok: true, now: Date.now(), onlineMs: ONLINE_MS, keys: filtered, me: { username: sess.username, role: sess.role } });
     }
     if (path === "/admin/create") {
       const script = String(b.script || "");
@@ -353,6 +377,22 @@ export default async (req) => {
       }
       await log(s, sess.username, "create_key", `${count} key(s)${b.room ? " [ห้องแชท]" : ""}: ${clip(b.name, 60)}`);
       return json({ ok: true, keys: out });
+    }
+    if (path === "/admin/announce-one") {
+      const text = clip(b.text, 200) || "👋 ทีมงาน NVEX เข้ามาที่เซิร์ฟเวอร์นี้แล้ว";
+      const r1 = await s.get(kk, { type: "json" });
+      if (!r1) return json({ ok: false, msg: "ไม่พบคีย์" });
+      r1.commands = [...(r1.commands || []), { type: "announcement", text, soundId: "", allowReply: false }].slice(-10);
+      await s.setJSON(kk, r1);
+      return json({ ok: true });
+    }
+    if (path === "/admin/notify-key") {
+      // ส่งแจ้งเตือน "เจ้าของเข้ามาแล้ว" ไปยังคีย์นั้นโดยตรง
+      const r = await s.get(kk, { type: "json" });
+      if (!r) return json({ ok: false, msg: "ไม่พบคีย์" });
+      r.commands = [...(r.commands || []), { type: "owner_joined", owner: sess.username }].slice(-10);
+      await s.setJSON(kk, r);
+      return json({ ok: true });
     }
     if (path === "/admin/announce") {
       const text = clip(b.text, 200);
