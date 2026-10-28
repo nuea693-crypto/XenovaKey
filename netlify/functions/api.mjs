@@ -4,29 +4,28 @@ const DAY = 864e5, ONLINE_MS = 90e3, SESSION_MS = 30 * DAY;
 const OWNER_USERNAME = "nyvexhub"; // ชื่อผู้ใช้เจ้าของระบบ (เปลี่ยนได้ตามต้องการ)
 const CUSTOMER_ACTIONS = new Set(["create_key", "delete_key", "ban_key", "unban_key", "reset_key", "tamper_detected", "announcement", "customer_reply"]);
 const MAX_IMAGE_LEN = 400000; // ~300KB
-const store = () => getStore({ name: "nvex", consistency: "strong" });
+const KEYLESS_MAX_USERS = 300; // เก็บรายชื่อผู้ใช้ Keyless ล่าสุดสูงสุดกี่คน
+const store = () => getStore({ name: "nvex", consistency: "strong" }); // ชื่อ store เดิม เพื่อไม่ให้ข้อมูลเก่าหาย
 const json = (o, s = 200) => new Response(JSON.stringify(o), { status: s, headers: { "content-type": "application/json" } });
 const clip = (v, n) => String(v ?? "").slice(0, n);
 const safe = v => String(v).replace(/[^\w.:\/-]/g, "");
 const hex = n => [...crypto.getRandomValues(new Uint8Array(n))].map(b => b.toString(16).padStart(2, "0")).join("");
-const genKey = () => {
-  const c = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  const s = [...crypto.getRandomValues(new Uint8Array(12))].map(x => c[x % c.length]).join("");
-  return `NVEX-${s.slice(0, 4)}-${s.slice(4, 8)}-${s.slice(8)}`;
-};
+const CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+const rndChars = n => [...crypto.getRandomValues(new Uint8Array(n))].map(x => CHARS[x % CHARS.length]).join("");
+const genKey = () => { const s = rndChars(12); return `NYVEX-${s.slice(0, 4)}-${s.slice(4, 8)}-${s.slice(8)}`; };
+const genOpenId = () => `NYVEX-OPEN-${rndChars(16)}`; // ไอดีของ Keyless เดาได้ยาก
 async function hashPw(pw, salt) {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(salt + ":" + pw));
   return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, "0")).join("");
 }
 
-// ---------- IP helper ----------
 function getIp(req) {
   return req.headers.get("x-nf-client-connection-ip")
     || (req.headers.get("x-forwarded-for") || "").split(",")[0].trim()
     || "unknown";
 }
 
-// ---------- Rate limiting / brute-force lockout (กันยิงเว็บ, กันบอท) ----------
+// ---------- Rate limiting / brute-force lockout ----------
 async function rateLimit(s, bucket, ip, max, windowMs) {
   const key = "rl:" + bucket + ":" + safe(ip);
   const now = Date.now();
@@ -52,8 +51,9 @@ async function guardFail(s, bucket, ip, maxFails, failWindowMs, lockMs, onLock) 
 }
 async function guardReset(s, bucket, ip) { await s.delete("lock:" + bucket + ":" + safe(ip)).catch(() => {}); }
 
-async function log(s, user, action, detail) {
-  await s.setJSON("log:" + (1e15 - Date.now()) + ":" + hex(4), { t: Date.now(), user, action, detail: clip(detail, 200) });
+// owner = เจ้าของคีย์ที่เกี่ยวข้อง (ใช้กรองประวัติให้เห็นเฉพาะของตัวเอง)
+async function log(s, user, action, detail, owner) {
+  await s.setJSON("log:" + (1e15 - Date.now()) + ":" + hex(4), { t: Date.now(), user, action, detail: clip(detail, 200), owner: owner || null });
 }
 
 // ---------- ตัวเข้ารหัสแบบใช้ซ้ำ (XOR + escape) ----------
@@ -113,7 +113,7 @@ local function call(path,body)
 end
 local function showBanner(text,soundId,allowReply,k,h)
   pcall(function()
-    local sg=Instance.new("ScreenGui") sg.Name="NVEX_Announce" sg.ResetOnSpawn=false
+    local sg=Instance.new("ScreenGui") sg.Name="NYVEXHUB_Announce" sg.ResetOnSpawn=false
     pcall(function() sg.Parent=CoreGui end) if not sg.Parent then sg.Parent=lp:WaitForChild("PlayerGui") end
     local card=Instance.new("Frame",sg)
     card.Size=UDim2.new(0,380,0,allowReply and 112 or 72)
@@ -127,7 +127,7 @@ local function showBanner(text,soundId,allowReply,k,h)
     local icon=Instance.new("TextLabel",card) icon.Size=UDim2.new(0,40,0,40) icon.Position=UDim2.new(0,14,0,14)
     icon.BackgroundTransparency=1 icon.Text="📢" icon.TextSize=28
     local title=Instance.new("TextLabel",card) title.Size=UDim2.new(1,-70,0,20) title.Position=UDim2.new(0,64,0,10)
-    title.BackgroundTransparency=1 title.TextXAlignment=Enum.TextXAlignment.Left title.Text="ประกาศจากแอดมิน NVEX"
+    title.BackgroundTransparency=1 title.TextXAlignment=Enum.TextXAlignment.Left title.Text="ประกาศจากแอดมิน NYVEXHUB"
     title.TextColor3=Color3.new(1,1,1) title.Font=Enum.Font.GothamBold title.TextSize=14
     local msg=Instance.new("TextLabel",card) msg.Size=UDim2.new(1,-80,0,26) msg.Position=UDim2.new(0,64,0,32)
     msg.BackgroundTransparency=1 msg.TextXAlignment=Enum.TextXAlignment.Left msg.TextWrapped=true
@@ -137,7 +137,7 @@ local function showBanner(text,soundId,allowReply,k,h)
     end
     if allowReply then
       local rb=Instance.new("TextBox",card) rb.Size=UDim2.new(1,-80,0,28) rb.Position=UDim2.new(0,64,0,68)
-      rb.BackgroundColor3=Color3.fromRGB(10,8,20) rb.TextColor3=Color3.new(1,1,1) rb.PlaceholderText="พิมพ์ตอบกลับแล้วกด Enter..."
+      rb.BackgroundColor3=Color3.fromRGB(10,8,20) rb.TextColor3=Color3.new(1,1,1) rb.PlaceholderText="พิมพ์ตอบกลับแล้วกด Enter"
       rb.Font=Enum.Font.Gotham rb.TextSize=12 Instance.new("UICorner",rb).CornerRadius=UDim.new(0,8)
       rb.FocusLost:Connect(function(enter)
         if enter and rb.Text~="" then
@@ -172,7 +172,7 @@ local function start(k)
     while true do
       task.wait(30)
       local h=call("/api/heartbeat",info(k))
-      if h.ok==false and h.msg~="เชื่อมต่อเซิร์ฟเวอร์ไม่ได้" then warn("[NVEX] "..tostring(h.msg)) break end
+      if h.ok==false and h.msg~="เชื่อมต่อเซิร์ฟเวอร์ไม่ได้" then warn("[NYVEXHUB] "..tostring(h.msg)) break end
     end
   end)
   pollAnnounce(k,hwid())
@@ -180,10 +180,10 @@ local function start(k)
   if f then task.spawn(f) else warn(err) end
   return true
 end
-local preset=getgenv and getgenv().Key
+local preset=("__PRESET__"~="" and "__PRESET__") or (getgenv and getgenv().Key)
 if preset then
   local ok,msg=start(preset)
-  if not ok then warn("[NVEX] "..tostring(msg)) end
+  if not ok then warn("[NYVEXHUB] "..tostring(msg)) end
   return
 end
 local gui=Instance.new("ScreenGui") gui.ResetOnSpawn=false
@@ -191,10 +191,10 @@ if not pcall(function() gui.Parent=CoreGui end) then gui.Parent=lp:WaitForChild(
 local f=Instance.new("Frame",gui) f.Size=UDim2.fromOffset(340,180) f.Position=UDim2.new(0.5,-170,0.5,-90)
 f.BackgroundColor3=Color3.fromRGB(15,15,22) f.Active=true f.Draggable=true
 Instance.new("UICorner",f).CornerRadius=UDim.new(0,12)
-local t=Instance.new("TextLabel",f) t.Size=UDim2.new(1,0,0,40) t.BackgroundTransparency=1 t.Text="NVEX Loader"
+local t=Instance.new("TextLabel",f) t.Size=UDim2.new(1,0,0,40) t.BackgroundTransparency=1 t.Text="NYVEXHUB Loader"
 t.TextColor3=Color3.fromRGB(190,110,255) t.Font=Enum.Font.GothamBold t.TextSize=15
 local box=Instance.new("TextBox",f) box.Size=UDim2.new(1,-40,0,36) box.Position=UDim2.new(0,20,0,48)
-box.BackgroundColor3=Color3.fromRGB(25,25,35) box.TextColor3=Color3.new(1,1,1) box.PlaceholderText="NVEX-XXXX-XXXX-XXXX"
+box.BackgroundColor3=Color3.fromRGB(25,25,35) box.TextColor3=Color3.new(1,1,1) box.PlaceholderText="NYVEX-XXXX-XXXX-XXXX"
 box.Text="" box.Font=Enum.Font.Gotham box.TextSize=13 Instance.new("UICorner",box)
 local b=Instance.new("TextButton",f) b.Size=UDim2.new(1,-40,0,36) b.Position=UDim2.new(0,20,0,94)
 b.BackgroundColor3=Color3.fromRGB(110,40,230) b.TextColor3=Color3.new(1,1,1) b.Text="ตรวจสอบคีย์" b.Font=Enum.Font.GothamBold b.TextSize=13
@@ -202,11 +202,13 @@ Instance.new("UICorner",b)
 local s=Instance.new("TextLabel",f) s.Size=UDim2.new(1,0,0,30) s.Position=UDim2.new(0,0,0,140) s.BackgroundTransparency=1
 s.Text="" s.TextColor3=Color3.fromRGB(150,150,190) s.Font=Enum.Font.Gotham s.TextSize=12
 b.MouseButton1Click:Connect(function()
-  s.Text="กำลังตรวจสอบ..."
+  s.Text="กำลังตรวจสอบ"
   local ok,msg=start(box.Text:upper():gsub("%s",""))
   if ok then gui:Destroy() else s.TextColor3=Color3.fromRGB(255,70,70) s.Text="❌ "..tostring(msg) end
 end)
 `;
+
+const buildLoader = (origin, preset) => LOADER.replaceAll("__BASE__", origin).replaceAll("__PRESET__", preset || "");
 
 export default async (req) => {
   const url = new URL(req.url);
@@ -214,14 +216,23 @@ export default async (req) => {
   const s = store();
   const ip = getIp(req);
 
-  // ---------- ขอ loader (obfuscated เต็มรูปแบบ กันเปิดดูตรงๆ) ----------
+  // ---------- ขอ loader แบบใช้คีย์ (obfuscated) ----------
   if (path === "/loader") {
     if (!(await rateLimit(s, "loader", ip, 20, 60000))) return json({ ok: false, msg: "too many requests" }, 429);
-    const code = LOADER.replaceAll("__BASE__", url.origin);
-    return new Response(wrapObfuscated(code), { headers: { "content-type": "text/plain; charset=utf-8" } });
+    return new Response(wrapObfuscated(buildLoader(url.origin, "")), { headers: { "content-type": "text/plain; charset=utf-8" } });
   }
 
-  // ---------- Auth (บัญชีผู้ใช้เว็บ) ----------
+  // ---------- Keyless Mode: ไม่ต้องกรอกคีย์ ไอดีฝังอยู่ในโค้ดที่เข้ารหัสแล้ว ----------
+  if (path.startsWith("/free/")) {
+    if (!(await rateLimit(s, "free", ip, 30, 60000))) return json({ ok: false, msg: "too many requests" }, 429);
+    const id = safe(clip(decodeURIComponent(path.slice(6)), 40)).toUpperCase().trim();
+    const fr = await s.get("k:" + id, { type: "json" }).catch(() => null);
+    const txt = { headers: { "content-type": "text/plain; charset=utf-8" } };
+    if (!fr || !fr.keyless || fr.banned) return new Response(`warn("[NYVEXHUB] สคริปต์นี้ไม่พร้อมใช้งาน")`, txt);
+    return new Response(wrapObfuscated(buildLoader(url.origin, id)), txt);
+  }
+
+  // ---------- Auth ----------
   if (path === "/auth/login" && req.method === "POST") {
     if (!(await guardLock(s, "login", ip))) return json({ ok: false, msg: "ลองรหัสผิดหลายครั้งเกินไป ลองใหม่อีก 10 นาที" }, 429);
     const b = await req.json().catch(() => ({}));
@@ -266,6 +277,8 @@ export default async (req) => {
     const b = req.method === "POST" ? await req.json().catch(() => ({})) : {};
     const kk = "k:" + clip(b.key, 40);
     const isOwner = sess.role === "owner";
+    // ส่วนตัว = เห็นเฉพาะที่ตัวเองสร้าง / ส่วนรวม = คีย์ห้องที่ทุกคนเห็นร่วมกัน (คีย์เก่าที่ไม่มีเจ้าของถือเป็นของ owner)
+    const canSee = r => !!r && (r.room || r.createdBy === sess.username || (!r.createdBy && isOwner));
 
     if (path === "/admin/users/list") {
       if (!isOwner) return json({ ok: false, msg: "เฉพาะเจ้าของระบบ" }, 403);
@@ -298,9 +311,9 @@ export default async (req) => {
     if (path === "/admin/logs" || path === "/admin/audit") {
       const isFullAudit = path === "/admin/audit";
       if (isFullAudit && !isOwner) return json({ ok: false, msg: "เฉพาะเจ้าของระบบ" }, 403);
-      const { blobs } = await s.list({ prefix: "log:", limit: 200 });
-      let recs = (await Promise.all(blobs.slice(0, 200).map(x => s.get(x.key, { type: "json" })))).filter(Boolean);
-      if (!isFullAudit) recs = recs.filter(r => CUSTOMER_ACTIONS.has(r.action));
+      const { blobs } = await s.list({ prefix: "log:", limit: isFullAudit ? 200 : 400 });
+      let recs = (await Promise.all(blobs.slice(0, isFullAudit ? 200 : 400).map(x => s.get(x.key, { type: "json" })))).filter(Boolean);
+      if (!isFullAudit) recs = recs.filter(r => CUSTOMER_ACTIONS.has(r.action) && (r.user === sess.username || r.owner === sess.username));
       recs.sort((a, c) => c.t - a.t);
       return json({ ok: true, logs: recs.slice(0, 150) });
     }
@@ -329,7 +342,8 @@ export default async (req) => {
 
     if (path === "/admin/list") {
       const { blobs } = await s.list({ prefix: "k:" });
-      const recs = (await Promise.all(blobs.map(x => s.get(x.key, { type: "json" })))).filter(Boolean);
+      let recs = (await Promise.all(blobs.map(x => s.get(x.key, { type: "json" })))).filter(Boolean);
+      recs = recs.filter(canSee);
       recs.forEach(r => { r.hasScript = !!r.script; delete r.script; });
       recs.sort((a, c) => c.createdAt - a.createdAt);
       return json({ ok: true, now: Date.now(), onlineMs: ONLINE_MS, keys: recs, me: { username: sess.username, role: sess.role } });
@@ -337,21 +351,22 @@ export default async (req) => {
     if (path === "/admin/create") {
       const script = String(b.script || "");
       if (!script.trim()) return json({ ok: false, msg: "ยังไม่ได้ใส่สคริปต์" });
-      const count = Math.min(Math.max(parseInt(b.count) || 1, 1), 50);
+      const keyless = !!b.keyless && !b.room;
+      const count = keyless ? 1 : Math.min(Math.max(parseInt(b.count) || 1, 1), 50);
       const out = [];
       for (let i = 0; i < count; i++) {
-        const key = genKey();
+        const key = keyless ? genOpenId() : genKey();
         const rec = {
-          key, name: clip(b.name, 60) || "NVEX Project", script,
-          maxUses: Math.min(Math.max(parseInt(b.maxUses) || 1, 1), 9999),
-          durationDays: Math.max(parseInt(b.durationDays) || 0, 0),
+          key, name: clip(b.name, 60) || "NYVEXHUB Project", script,
+          maxUses: keyless ? 999999 : Math.min(Math.max(parseInt(b.maxUses) || 1, 1), 9999),
+          durationDays: keyless ? 0 : Math.max(parseInt(b.durationDays) || 0, 0),
           createdAt: Date.now(), activatedAt: null, expiresAt: null, banned: false, users: {},
-          createdBy: sess.username, tamper: [], commands: [], room: !!b.room,
+          createdBy: sess.username, tamper: [], commands: [], room: !!b.room, keyless,
         };
         await s.setJSON("k:" + key, rec);
         out.push(key);
       }
-      await log(s, sess.username, "create_key", `${count} key(s)${b.room ? " [ห้องแชท]" : ""}: ${clip(b.name, 60)}`);
+      await log(s, sess.username, "create_key", `${count} ${keyless ? "keyless" : "key(s)"}${b.room ? " [ส่วนรวม]" : ""}: ${clip(b.name, 60)}`, sess.username);
       return json({ ok: true, keys: out });
     }
     if (path === "/admin/announce") {
@@ -362,19 +377,23 @@ export default async (req) => {
       const { blobs } = await s.list({ prefix: "k:" });
       for (const blob of blobs) {
         const kRec = await s.get(blob.key, { type: "json" });
-        if (kRec && !kRec.banned) {
+        if (kRec && !kRec.banned && canSee(kRec)) { // ส่งเฉพาะคีย์ที่ตัวเองมองเห็น
           kRec.commands = [...(kRec.commands || []), { type: "announcement", text, soundId, allowReply }].slice(-10);
           await s.setJSON(blob.key, kRec);
         }
       }
-      await log(s, sess.username, "announcement", text);
+      await log(s, sess.username, "announcement", text, sess.username);
       return json({ ok: true });
     }
     const r = await s.get(kk, { type: "json" });
     if (!r) return json({ ok: false, msg: "ไม่พบคีย์" });
-    if (path === "/admin/delete") { await s.delete(kk); await log(s, sess.username, "delete_key", r.key); return json({ ok: true }); }
-    if (path === "/admin/reset") { r.users = {}; await log(s, sess.username, "reset_key", r.key); }
-    else if (path === "/admin/ban") { r.banned = !r.banned; await log(s, sess.username, r.banned ? "ban_key" : "unban_key", r.key); }
+    if (!canSee(r)) return json({ ok: false, msg: "ไม่ใช่คีย์ของคุณ" }, 403);
+    if (path === "/admin/delete") {
+      if (r.room && r.createdBy !== sess.username && !isOwner) return json({ ok: false, msg: "ลบได้เฉพาะคนสร้างหรือเจ้าของระบบ" }, 403);
+      await s.delete(kk); await log(s, sess.username, "delete_key", r.key, r.createdBy); return json({ ok: true });
+    }
+    if (path === "/admin/reset") { r.users = {}; await log(s, sess.username, "reset_key", r.key, r.createdBy); }
+    else if (path === "/admin/ban") { r.banned = !r.banned; await log(s, sess.username, r.banned ? "ban_key" : "unban_key", r.key, r.createdBy); }
     else if (path === "/admin/kick") { delete r.users[clip(b.hwid, 128)]; }
     else return json({ ok: false, msg: "unknown" }, 404);
     await s.setJSON(kk, r);
@@ -391,7 +410,7 @@ export default async (req) => {
       tr.tamper = [...(tr.tamper || []), { t: Date.now(), hwid: clip(tb.hwid, 128), username: clip(tb.username, 40), reason: clip(tb.reason, 40) }].slice(-20);
       tr.banned = true;
       await s.setJSON(tk, tr);
-      await log(s, "system", "tamper_detected", `${tr.key} by ${clip(tb.username, 40)}`);
+      await log(s, "system", "tamper_detected", `${tr.key} by ${clip(tb.username, 40)}`, tr.createdBy);
     }
     return json({ ok: true });
   }
@@ -401,7 +420,10 @@ export default async (req) => {
     if (!(await rateLimit(s, "reply", ip, 10, 60000))) return json({ ok: false }, 429);
     const rb = await req.json().catch(() => ({}));
     const text = clip(rb.text, 300);
-    if (text.trim()) await log(s, clip(rb.username, 40) || "ลูกค้า", "customer_reply", text);
+    if (text.trim()) {
+      const rr = await s.get("k:" + clip(rb.key, 40).toUpperCase().trim(), { type: "json" }).catch(() => null);
+      await log(s, clip(rb.username, 40) || "ลูกค้า", "customer_reply", text, rr ? rr.createdBy : null);
+    }
     return json({ ok: true });
   }
 
@@ -433,7 +455,6 @@ export default async (req) => {
   const r = await s.get(key, { type: "json" });
   const err = check(r, hwid);
   if (err) {
-    // คีย์ไม่พบ/ผิด ถือเป็นสัญญาณของการเดาคีย์ (บอท) เฉพาะตอน verify
     if (path === "/verify" && err === "ไม่พบคีย์นี้") {
       await guardFail(s, "keyfail", ip, 15, 5 * 60000, 15 * 60000, () => log(s, "system", "bot_blocked", `เดาคีย์รัว ๆ จาก IP ${ip}`));
     }
@@ -452,6 +473,13 @@ export default async (req) => {
     placeId: Number(b.placeId) || 0, jobId: clip(b.jobId, 60), lastSeen: now,
   });
   r.users[hwid] = u;
+  if (r.keyless) { // กัน record บวม: เก็บเฉพาะคนที่เห็นล่าสุด
+    const ids = Object.keys(r.users);
+    if (ids.length > KEYLESS_MAX_USERS) {
+      ids.sort((a, c) => r.users[a].lastSeen - r.users[c].lastSeen)
+        .slice(0, ids.length - KEYLESS_MAX_USERS).forEach(h => delete r.users[h]);
+    }
+  }
   await s.setJSON(key, r);
   const payload = { ok: true, msg: "OK", expiresAt: r.expiresAt };
   if (path === "/verify") {
