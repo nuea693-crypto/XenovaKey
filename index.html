@@ -6,187 +6,371 @@
 <title>NYVEXHUB — Shadow Control Panel</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;600;750;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
-/* ── Pixel / Font Rules ── */
-.pixel-font { font-family: 'Press Start 2P', monospace; }
-.pixel-inp{font-family:'Press Start 2P',monospace;font-size:9px;background:rgba(0,0,0,0.75);border:2px solid #2d2d2d;border-radius:8px;color:#e2e8f0;padding:13px 14px;width:100%;outline:none;letter-spacing:1px;margin-bottom:12px;display:block;transition:border-color .15s,box-shadow .15s;}
-.pixel-inp:focus{border-color:#dc2626;box-shadow:0 0 10px rgba(220,38,38,0.5);}
-.pixel-inp::placeholder{color:#374151;font-size:8px;}
-.pixel-btn{font-family:'Press Start 2P',monospace;font-size:9px;background:linear-gradient(135deg,#b91c1c,#6d28d9);color:#fff;border:none;border-radius:8px;padding:14px;width:100%;cursor:pointer;letter-spacing:2px;transition:all .2s;box-shadow:0 0 16px rgba(220,38,38,0.45);}
-.pixel-btn:hover{box-shadow:0 0 28px rgba(220,38,38,0.7),0 0 28px rgba(109,40,217,0.5);transform:translateY(-1px);}
-#l-err{font-family:'Press Start 2P',monospace;font-size:7px;color:#f87171;margin-top:10px;min-height:14px;letter-spacing:1px;display:block;}
+/* ── Pixel Font Every System ── */
+* {
+  font-family: 'Press Start 2P', monospace !important;
+}
 
-/* ── Canvas BG ── */
-#bg-canvas{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;}
+/* ── Pixel Login Input & Button (Rounded Corners) ── */
+.pixel-inp {
+  font-size: 9px;
+  background: rgba(0, 0, 0, 0.85);
+  border: 2px solid #374151;
+  border-radius: 12px; /* มุมมนทู่ๆ ตามสั่ง */
+  color: #e2e8f0;
+  padding: 14px 16px;
+  width: 100%;
+  outline: none;
+  letter-spacing: 1px;
+  margin-bottom: 14px;
+  display: block;
+  transition: all 0.2s;
+}
+.pixel-inp:focus {
+  border-color: #dc2626;
+  box-shadow: 0 0 12px rgba(220, 38, 38, 0.5);
+}
+.pixel-inp::placeholder {
+  color: #4b5563;
+  font-size: 8px;
+}
+.pixel-btn {
+  font-size: 10px;
+  background: #ffffff;
+  color: #000000;
+  border: 2px solid #ffffff;
+  border-radius: 12px; /* มุมมนทู่ๆ */
+  padding: 14px;
+  width: 100%;
+  cursor: pointer;
+  letter-spacing: 2px;
+  font-weight: bold;
+  transition: all 0.2s;
+  box-shadow: 0 4px 15px rgba(255, 255, 255, 0.2);
+}
+.pixel-btn:hover {
+  background: #dc2626;
+  color: #ffffff;
+  border-color: #dc2626;
+  box-shadow: 0 0 20px rgba(220, 38, 38, 0.7);
+  transform: translateY(-2px);
+}
+#l-err {
+  font-size: 7px;
+  color: #f87171;
+  margin-top: 12px;
+  min-height: 14px;
+  letter-spacing: 1px;
+  display: block;
+}
 
-/* ── Login Screen ── */
-#login-screen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:100;background:#040408;}
-.login-box{position:relative;z-index:10;background:rgba(4,4,8,0.92);border:2px solid #dc2626;padding:36px 32px;width:100%;max-width:380px;text-align:center;box-shadow:0 0 50px rgba(220,38,38,0.3),inset 0 0 30px rgba(220,38,38,0.04);border-radius:12px;backdrop-filter:blur(8px);}
-.login-avatar{width:88px;height:88px;border-radius:50%;border:2px solid #dc2626;box-shadow:0 0 28px rgba(220,38,38,0.65);object-fit:cover;display:block;margin:0 auto 16px;}
-.login-title{font-family:'Press Start 2P',monospace;font-size:12px;color:#fff;text-shadow:0 0 14px #dc2626,0 0 30px rgba(220,38,38,0.35);margin-bottom:8px;letter-spacing:2px;}
-.login-sub{font-family:'Press Start 2P',monospace;font-size:6px;color:#6b7280;margin-bottom:26px;letter-spacing:3px;}
+/* ── Canvas Background ── */
+#bg-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* ── Login Screen (Retro Pixel Style with Rounded Border) ── */
+#login-screen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+.login-box {
+  position: relative;
+  z-index: 10;
+  background: rgba(10, 10, 15, 0.95);
+  border: 2px solid #27272a;
+  padding: 36px 32px;
+  width: 100%;
+  max-width: 380px;
+  text-align: center;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.8), 0 0 20px rgba(220, 38, 38, 0.2);
+  border-radius: 20px; /* มุมมนทู่ */
+  backdrop-filter: blur(10px);
+}
+.login-avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: 18px;
+  border: 2px solid #dc2626;
+  box-shadow: 0 0 20px rgba(220, 38, 38, 0.5);
+  object-fit: cover;
+  display: block;
+  margin: 0 auto 20px;
+}
+.login-title {
+  font-size: 16px;
+  color: #fff;
+  text-shadow: 0 0 10px #dc2626;
+  margin-bottom: 8px;
+  letter-spacing: 2px;
+}
+.login-sub {
+  font-size: 7px;
+  color: #6b7280;
+  margin-bottom: 24px;
+  letter-spacing: 3px;
+}
 
 /* ── Welcome Overlay (Typewriter) ── */
-#welcome-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.97);z-index:500;display:none;align-items:center;justify-content:center;flex-direction:column;gap:24px;}
-#welcome-text{font-family:'Press Start 2P',monospace;font-size:11px;color:#dc2626;text-shadow:0 0 20px rgba(220,38,38,0.9),0 0 50px rgba(220,38,38,0.3);max-width:560px;text-align:center;line-height:2.8;padding:20px;}
-#welcome-logo{width:80px;height:80px;border-radius:50%;border:2px solid #dc2626;box-shadow:0 0 20px rgba(220,38,38,0.6);object-fit:cover;}
-@keyframes wcur{0%,100%{opacity:1}50%{opacity:0}}
-.wcursor{display:inline-block;width:9px;height:14px;background:#dc2626;animation:wcur .7s step-end infinite;vertical-align:text-bottom;margin-left:2px;}
-
-/* ── Main Layout UI ── */
-:root {
-  --red: #dc2626; --red-dim: rgba(220,38,38,0.15); --red-glow: rgba(220,38,38,0.4);
-  --purple: #7c3aed; --purple-dim: rgba(124,58,237,0.15);
-  --card: rgba(255,255,255,0.035); --border: rgba(255,255,255,0.08);
-  --border-red: rgba(220,38,38,0.3);
+#welcome-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 4, 8, 0.98);
+  z-index: 500;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 20px;
 }
-* { box-sizing: border-box; }
-body { background: #060608; color: #e2e8f0; font-family: 'Inter', sans-serif; min-height: 100vh; }
-::-webkit-scrollbar { width: 4px; height: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--red-glow); border-radius: 99px; }
+#welcome-text {
+  font-size: 10px;
+  color: #dc2626;
+  text-shadow: 0 0 15px rgba(220, 38, 38, 0.8);
+  max-width: 600px;
+  text-align: center;
+  line-height: 2.4;
+  padding: 20px;
+}
+#welcome-logo {
+  width: 80px;
+  height: 80px;
+  border-radius: 16px;
+  border: 2px solid #dc2626;
+  box-shadow: 0 0 25px rgba(220, 38, 38, 0.6);
+  object-fit: cover;
+}
+@keyframes wcur { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+.wcursor {
+  display: inline-block;
+  width: 8px;
+  height: 12px;
+  background: #dc2626;
+  animation: wcur .7s step-end infinite;
+  vertical-align: text-bottom;
+  margin-left: 4px;
+}
 
+/* ── UI Theme Variables & Base Style ── */
+:root {
+  --red: #dc2626;
+  --red-dim: rgba(220, 38, 38, 0.15);
+  --red-glow: rgba(220, 38, 38, 0.4);
+  --purple: #7c3aed;
+  --purple-dim: rgba(124, 58, 237, 0.15);
+  --card: rgba(18, 18, 26, 0.75);
+  --border: rgba(255, 255, 255, 0.08);
+  --border-red: rgba(220, 38, 38, 0.3);
+}
+body {
+  background: #060608;
+  color: #e2e8f0;
+  min-height: 100vh;
+  margin: 0;
+  overflow-x: hidden;
+}
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: #060608; }
+::-webkit-scrollbar-thumb { background: var(--red); border-radius: 10px; }
+
+/* ── Dashboard Layout ── */
 #layout { display: flex; min-height: 100vh; position: relative; z-index: 10; }
-#sidebar { width: 220px; min-width: 220px; background: rgba(8,6,12,0.95); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; height: 100vh; z-index: 50; transition: transform .3s; }
-#main { margin-left: 220px; flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
-@media(max-width:768px){ #sidebar{transform:translateX(-100%);} #sidebar.open{transform:none;} #main{margin-left:0;} }
+#sidebar {
+  width: 240px;
+  min-width: 240px;
+  background: rgba(10, 8, 16, 0.95);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0; left: 0;
+  height: 100vh;
+  z-index: 50;
+  transition: transform .3s;
+}
+#main { margin-left: 240px; flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+@media(max-width:768px){
+  #sidebar { transform: translateX(-100%); }
+  #sidebar.open { transform: none; }
+  #main { margin-left: 0; }
+}
 
-.sidebar-brand { padding: 20px 16px 12px; border-bottom: 1px solid var(--border); }
-.brand-char { width: 56px; height: 56px; border-radius: 50%; border: 2px solid var(--red); object-fit: cover; box-shadow: 0 0 16px var(--red-glow); display: block; margin: 0 auto 8px; }
-.brand-name { text-align: center; font-weight: 800; font-size: 14px; background: linear-gradient(135deg, #ef4444, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-.brand-sub { text-align: center; font-size: 9px; color: #6b7280; margin-top: 2px; }
+/* Sidebar Branding */
+.sidebar-brand { padding: 24px 16px 16px; border-bottom: 1px solid var(--border); text-align: center; }
+.brand-char {
+  width: 64px; height: 64px;
+  border-radius: 16px;
+  border: 2px solid var(--red);
+  object-fit: cover;
+  box-shadow: 0 0 20px var(--red-glow);
+  display: block;
+  margin: 0 auto 10px;
+}
+.brand-name { font-size: 11px; color: #ef4444; text-shadow: 0 0 10px rgba(239, 68, 68, 0.5); }
+.brand-sub { font-size: 6px; color: #6b7280; margin-top: 4px; }
 
-#nav { flex: 1; padding: 8px; overflow-y: auto; }
-.nav-section { font-size: 9px; font-weight: 700; letter-spacing: .1em; color: #4b5563; text-transform: uppercase; padding: 12px 8px 4px; }
-.nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px; cursor: pointer; font-size: 13px; color: #9ca3af; transition: all .15s; margin-bottom: 1px; user-select: none; }
-.nav-item:hover { background: var(--red-dim); color: #e5e7eb; }
-.nav-item.active { background: linear-gradient(135deg, var(--red-dim), var(--purple-dim)); color: #fff; border-left: 2px solid var(--red); box-shadow: inset 0 0 20px rgba(220,38,38,0.1); }
-.nav-item .ni { font-size: 16px; width: 20px; text-align: center; }
+/* Navigation */
+#nav { flex: 1; padding: 12px 8px; overflow-y: auto; }
+.nav-section { font-size: 7px; color: #4b5563; text-transform: uppercase; padding: 12px 8px 6px; }
+.nav-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 12px; border-radius: 10px; cursor: pointer;
+  font-size: 8px; color: #9ca3af; transition: all .15s; margin-bottom: 4px; user-select: none;
+}
+.nav-item:hover { background: var(--red-dim); color: #fff; }
+.nav-item.active {
+  background: linear-gradient(135deg, var(--red-dim), var(--purple-dim));
+  color: #fff; border-left: 3px solid var(--red);
+}
 
-.sidebar-user { padding: 12px 16px; border-top: 1px solid var(--border); }
-.user-row { display: flex; align-items: center; gap: 8px; }
-.user-avatar { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, var(--red), var(--purple)); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
-.user-name { font-size: 12px; font-weight: 600; }
-.user-role { font-size: 10px; color: #6b7280; }
+/* User Footer */
+.sidebar-user { padding: 14px; border-top: 1px solid var(--border); }
+.user-row { display: flex; align-items: center; gap: 10px; }
+.user-avatar {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: linear-gradient(135deg, var(--red), var(--purple));
+  display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold;
+}
+.user-name { font-size: 8px; color: #fff; }
+.user-role { font-size: 6px; color: #6b7280; margin-top: 2px; }
 
-#topbar { background: rgba(8,6,12,0.8); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; position: sticky; top: 0; z-index: 40; }
-.topbar-stats { display: flex; gap: 16px; }
-.stat-pill { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 4px 12px; font-size: 11px; display: flex; align-items: center; gap: 6px; }
+/* Topbar */
+#topbar {
+  background: rgba(10, 8, 16, 0.85);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 20px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 40;
+}
+.topbar-stats { display: flex; gap: 12px; }
+.stat-pill {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 6px 12px; font-size: 7px;
+  display: flex; align-items: center; gap: 6px;
+}
 
-#content { flex: 1; padding: 20px; }
+/* Content Area */
+#content { flex: 1; padding: 24px; }
 .tab-panel { display: none; }
 .tab-panel.active { display: block; }
 
-.card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 16px; }
-.card-red { border-color: var(--border-red); background: rgba(220,38,38,0.04); }
-.card-purple { border-color: rgba(124,58,237,0.3); background: rgba(124,58,237,0.04); }
-.card-yellow { border-color: rgba(234,179,8,0.3); background: rgba(234,179,8,0.04); }
-.card-title { font-size: 15px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+/* Cards & Inputs */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 20px;
+  backdrop-filter: blur(8px);
+}
+.card-red { border-color: var(--border-red); background: rgba(220, 38, 38, 0.05); }
+.card-purple { border-color: rgba(124, 58, 237, 0.3); background: rgba(124, 58, 237, 0.05); }
+.card-yellow { border-color: rgba(234, 179, 8, 0.3); background: rgba(234, 179, 8, 0.05); }
+.card-title { font-size: 10px; font-weight: bold; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
 
-.inp { width: 100%; background: rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; font-size: 13px; color: #e2e8f0; outline: none; transition: border .15s; }
+.inp {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 8px;
+  color: #e2e8f0;
+  outline: none;
+  transition: border .15s;
+}
 .inp:focus { border-color: var(--red); }
-.inp::placeholder { color: #4b5563; }
 textarea.inp { resize: vertical; }
-select.inp { cursor: pointer; }
 
-.btn { border-radius: 10px; padding: 9px 18px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all .15s; }
-.btn-red { background: linear-gradient(135deg, #dc2626, #991b1b); color: white; }
-.btn-red:hover { background: linear-gradient(135deg, #ef4444, #b91c1c); box-shadow: 0 0 12px var(--red-glow); }
-.btn-purple { background: linear-gradient(135deg, #7c3aed, #5b21b6); color: white; }
-.btn-purple:hover { box-shadow: 0 0 12px rgba(124,58,237,0.5); }
-.btn-ghost { background: rgba(255,255,255,0.06); color: #9ca3af; border: 1px solid var(--border); }
-.btn-ghost:hover { background: rgba(255,255,255,0.1); color: white; }
-.btn-sm { padding: 5px 10px; font-size: 11px; border-radius: 7px; }
+/* Buttons & Tables */
+.btn {
+  border-radius: 10px; padding: 10px 16px; font-size: 8px;
+  cursor: pointer; border: none; transition: all .15s; display: inline-block; text-align: center;
+}
+.btn-red { background: #dc2626; color: white; }
+.btn-red:hover { background: #ef4444; box-shadow: 0 0 12px var(--red-glow); }
+.btn-purple { background: #7c3aed; color: white; }
+.btn-ghost { background: rgba(255, 255, 255, 0.06); color: #9ca3af; border: 1px solid var(--border); }
+.btn-sm { padding: 6px 10px; font-size: 7px; border-radius: 8px; }
 .btn-full { width: 100%; }
 
-.tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
-.tbl th { padding: 8px 10px; text-align: left; color: #6b7280; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; border-bottom: 1px solid var(--border); }
-.tbl td { padding: 10px 10px; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; }
-.tbl tr:last-child td { border-bottom: none; }
-.tbl tr:hover td { background: rgba(255,255,255,0.02); }
+.tbl { width: 100%; border-collapse: collapse; font-size: 8px; }
+.tbl th { padding: 10px; text-align: left; color: #6b7280; border-bottom: 1px solid var(--border); text-transform: uppercase; }
+.tbl td { padding: 12px 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.03); vertical-align: middle; }
 .tbl-wrap { overflow-x: auto; }
-.tbl-scroll { overflow-x: auto; max-height: 380px; overflow-y: auto; }
 
-.badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 99px; font-size: 10px; font-weight: 600; }
-.badge-green { background: rgba(34,197,94,0.15); color: #4ade80; }
-.badge-red { background: rgba(220,38,38,0.15); color: #f87171; }
-.badge-gray { background: rgba(107,114,128,0.15); color: #6b7280; }
-.badge-yellow { background: rgba(234,179,8,0.15); color: #facc15; }
-.badge-purple { background: rgba(124,58,237,0.15); color: #a78bfa; }
-.badge-indigo { background: rgba(99,102,241,0.15); color: #818cf8; }
+.badge { padding: 4px 8px; border-radius: 6px; font-size: 6px; display: inline-block; }
+.badge-green { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
+.badge-red { background: rgba(220, 38, 38, 0.2); color: #f87171; }
+.badge-gray { background: rgba(107, 114, 128, 0.2); color: #9ca3af; }
+.badge-purple { background: rgba(124, 58, 237, 0.2); color: #a78bfa; }
+.badge-indigo { background: rgba(99, 102, 241, 0.2); color: #818cf8; }
 
-#ann-cooldown-bar { height: 3px; background: rgba(255,255,255,0.1); border-radius: 99px; overflow: hidden; margin-top: 8px; display: none; }
-#ann-cooldown-fill { height: 100%; background: linear-gradient(90deg, var(--red), var(--purple)); width: 100%; transition: width .1s linear; border-radius: 99px; }
-
-@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
-.pulse { animation: pulse 2s infinite; }
-
-#chat-box { background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 12px; padding: 12px; height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-.chat-msg { display: flex; flex-direction: column; }
-.chat-msg.mine { align-items: flex-end; }
-.chat-msg.other { align-items: flex-start; }
-.chat-bubble { max-width: 75%; border-radius: 12px; padding: 8px 12px; font-size: 12px; }
-.mine .chat-bubble { background: linear-gradient(135deg, #7c3aed, #dc2626); color: white; border-bottom-right-radius: 3px; }
-.other .chat-bubble { background: rgba(255,255,255,0.07); color: #e2e8f0; border-bottom-left-radius: 3px; }
-.chat-meta { font-size: 10px; color: #4b5563; margin-bottom: 3px; }
-
-#hamburger { display: none; background: none; border: none; color: white; font-size: 20px; cursor: pointer; padding: 4px; }
-@media(max-width:768px){ #hamburger{display:flex;} }
-
-.grad-text { background: linear-gradient(135deg, #ef4444, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-#sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 49; }
+#hamburger { display: none; background: none; border: none; color: white; font-size: 16px; cursor: pointer; }
+@media(max-width:768px){ #hamburger{ display: block; } }
+#sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7); z-index: 49; }
 #sidebar-overlay.show { display: block; }
 </style>
 </head>
 <body>
+
 <canvas id="bg-canvas"></canvas>
 
-<!-- Welcome Typewriter Overlay -->
+<!-- Welcome Overlay (Typewriter) -->
 <div id="welcome-overlay">
-  <img id="welcome-logo" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%2308060c' stroke='%23dc2626' stroke-width='4'/><path d='M30,35 Q35,10 50,30 Q65,10 70,35 Z' fill='%23dc2626'/><circle cx='42' cy='45' r='5' fill='%23fff'/><circle cx='58' cy='45' r='5' fill='%23fff'/><polygon points='47,55 53,55 50,62' fill='%23dc2626'/></svg>" alt="Shadow Rabbit">
+  <img id="welcome-logo" src="data:image/jpeg;base64,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" alt="S">
   <div id="welcome-text"></div>
 </div>
 
 <!-- Login Screen -->
 <div id="login-screen">
   <div class="login-box">
-    <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%2308060c' stroke='%23dc2626' stroke-width='4'/><path d='M30,35 Q35,10 50,30 Q65,10 70,35 Z' fill='%23dc2626'/><circle cx='42' cy='45' r='5' fill='%23fff'/><circle cx='58' cy='45' r='5' fill='%23fff'/><polygon points='47,55 53,55 50,62' fill='%23dc2626'/></svg>" class="login-avatar" alt="Shadow Rabbit">
+    <img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBwgHBgkIBwgKCgkLDRYPDQwMDRsUFRAWIB0iIiAdHx8kKDQsJCYxJx8fLT0tMTU3Ojo6Iys/RD84QzQ5OjcBCgoKDQwNGg8PGjclHyU3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3N//AABEIAbcBxwMBIgACEQEDEQH/xAAcAAACAwEBAQEAAAAAAAAAAAAAAQIDBAUGBwj/xABDEAACAQMCBAMFBgQEBgAHAQAAAQIDBBEFIRIxQVEGE2EiMnGBkQcUQlKhsSNiwdEVM3LwJENTgpLhVGNzk6LS8SX/xAAaAQADAQEBAQAAAAAAAAAAAAAAAQIDBAUG/8QAKREAAgICAgICAgIBBlo3D3D8p3/M0/S7Xk44m+f632fI8Y4367qIByx/d25Y6t8m3s2x4iIn/S9j0p2aW34U3+5fSt4UpNx/Fuv2AIs0ikS2kXU0lUkl3MdzNyqyXXoARF2X0ThFJL4m/p/wAAAAtCZIsS2AAYC36SjH3f/eX9QARLOnEmS/2AARC//2Q==" class="login-avatar" alt="Shadow">
     <div class="login-title">NYVEXHUB</div>
     <div class="login-sub">— SHADOW WHITELIST —</div>
     <input id="l-user" class="pixel-inp" placeholder="USERNAME" autocomplete="username">
     <input id="l-pass" class="pixel-inp" type="password" placeholder="PASSWORD" autocomplete="current-password">
-    <button id="l-btn" class="pixel-btn">[ ENTER ]</button>
+    <button id="l-btn" class="pixel-btn">[ LOG IN ]</button>
     <span id="l-err"></span>
   </div>
 </div>
 
-<!-- Sidebar overlay (mobile) -->
 <div id="sidebar-overlay"></div>
 
-<!-- Main layout -->
+<!-- Main App -->
 <div id="layout" style="display:none;">
-  <!-- Sidebar -->
   <aside id="sidebar">
     <div class="sidebar-brand">
-      <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%2308060c' stroke='%23dc2626' stroke-width='4'/><path d='M30,35 Q35,10 50,30 Q65,10 70,35 Z' fill='%23dc2626'/><circle cx='42' cy='45' r='5' fill='%23fff'/><circle cx='58' cy='45' r='5' fill='%23fff'/><polygon points='47,55 53,55 50,62' fill='%23dc2626'/></svg>" class="brand-char" alt="Shadow Rabbit">
-      <div class="brand-name pixel-font" style="font-size:11px;">NYVEXHUB</div>
-      <div class="brand-sub">Shadow Whitelist</div>
+      <img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBwgHBgkIBwgKCgkLDRYPDQwMDRsUFRAWIB0iIiAdHx8kKDQsJCYxJx8fLT0tMTU3Ojo6Iys/RD84QzQ5OjcBCgoKDQwNGg8PGjclHyU3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3N//AABEIAbcBxwMBIgACEQEDEQH/xAAcAAACAwEBAQEAAAAAAAAAAAAAAQIDBAUGBwj/xABDEAACAQMCBAMFBgQEBgAHAQAAAQIDBBEFIRIxQVEGE2EiMnGBkQcUQlKhsSNiwdEVM3LwJENTgpLhVGNzk6LS8SX/xAAaAQADAQEBAQAAAAAAAAAAAAAAAQIDBAUG/8QAKREAAgICAgICAgIBBh0D7PnT/2wCEAAkGBwgHBgkIBwgKCgkLDRYPDQwMDRsUFRAWIB0iIiAdHx8kKDQsJCYxJx8fLT0tMTU3Ojo6Iys/RD84QzQ5OjcBCgoKDQwNGg8PGjclHyU3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3N//AABEIAbcBxwMBIgACEQEDEQH/xAAcAAACAwEBAQEAAAAAAAAAAAAAAQIDBAUGBwj/xABDEAACAQMCBAMFBgQEBgAHAQAAAQIDBBEFIRIxQVEGE2EiMnGBkQcUQlKhsSNiwdEVM3LwJENTgpLhVGNzk6LS8SX/xAAaAQADAQEBAQAAAAAAAAAAAAAAAQIDBAUG/8QAKREAAgICAgICAgIBBlo3D3D8p3/M0/S7Xk44m+f632fI8Y4367qIByx/d25Y6t8m3s2x4iIn/S9j0p2aW34U3+5fSt4UpNx/Fuv2AIs0ikS2kXU0lUkl3MdzNyqyXXoARF2X0ThFJL4m/p/AAAAtCZIsS2AAYC36SjH3f/eX9QARLOnEmS/2AARC//2Q==" class="brand-char" alt="Shadow">
+      <div class="brand-name">NYVEXHUB</div>
+      <div class="brand-sub">Shadow Whitelist System</div>
     </div>
 
     <nav id="nav">
-      <div class="nav-section">หลัก</div>
-      <div class="nav-item active" data-tab="create"><span class="ni">🔑</span> สร้างคีย์</div>
-      <div class="nav-item" data-tab="announce"><span class="ni">📢</span> ประกาศ</div>
-      <div class="nav-item" data-tab="players"><span class="ni">👁️</span> ผู้เล่นออนไลน์</div>
-      <div class="nav-item" data-tab="keys"><span class="ni">📋</span> คีย์ทั้งหมด</div>
-      <div class="nav-section">ทีม</div>
-      <div class="nav-item" data-tab="chat"><span class="ni">💬</span> ห้องพูดคุย</div>
-      <div class="nav-item" data-tab="custlog"><span class="ni">🕑</span> ประวัติลูกค้า</div>
+      <div class="nav-section">MAIN</div>
+      <div class="nav-item active" data-tab="create">🔑 Create Key</div>
+      <div class="nav-item" data-tab="announce">📢 Announcement</div>
+      <div class="nav-item" data-tab="players">👁️ Online Players</div>
+      <div class="nav-item" data-tab="keys">📋 My Keys</div>
+      <div class="nav-section">TEAM</div>
+      <div class="nav-item" data-tab="chat">💬 Group Chat & Room Keys</div>
+      <div class="nav-item" data-tab="custlog">🕑 Audit Logs</div>
       <div id="owner-nav" style="display:none;">
-        <div class="nav-section">Owner Only</div>
-        <div class="nav-item" data-tab="admins"><span class="ni">👑</span> บัญชีแอดมิน</div>
-        <div class="nav-item" data-tab="syslog"><span class="ni">🔒</span> ประวัติระบบ</div>
+        <div class="nav-section">OWNER ONLY</div>
+        <div class="nav-item" data-tab="admins">👑 Admin Accounts</div>
+        <div class="nav-item" data-tab="syslog">🔒 System Logs</div>
       </div>
     </nav>
 
@@ -197,162 +381,135 @@ select.inp { cursor: pointer; }
           <div class="user-name" id="me-name">-</div>
           <div class="user-role" id="me-role">-</div>
         </div>
-        <button id="logout-btn" class="btn btn-ghost btn-sm" style="margin-left:auto;padding:4px 8px;font-size:10px;">ออก</button>
+        <button id="logout-btn" class="btn btn-ghost btn-sm" style="margin-left:auto;">Exit</button>
       </div>
     </div>
   </aside>
 
-  <!-- Main -->
   <main id="main">
-    <!-- Topbar -->
     <div id="topbar">
-      <div style="display:flex;align-items:center;gap:12px;">
-        <button id="hamburger">☰</button>
-        <div class="grad-text pixel-font" style="font-weight:800;font-size:12px;">NYVEXHUB</div>
-      </div>
+      <button id="hamburger">☰</button>
+      <div style="font-size:10px;color:#ef4444;">🛡️ NYVEXHUB CONTROL PANEL</div>
       <div class="topbar-stats">
-        <div class="stat-pill"><span class="pulse" style="color:#4ade80;">●</span> <span>ออนไลน์ <strong id="st-online">0</strong> คน</span></div>
-        <div class="stat-pill">🔑 <span>คีย์ทั้งหมด <strong id="st-keys">0</strong></span></div>
+        <div class="stat-pill">Online: <strong id="st-online" style="color:#4ade80;">0</strong></div>
+        <div class="stat-pill">Keys: <strong id="st-keys">0</strong></div>
       </div>
     </div>
 
-    <!-- Content -->
     <div id="content">
-
-      <!-- สร้างคีย์ -->
+      <!-- Tab 1: Create Key -->
       <div class="tab-panel active" data-tab="create">
         <div class="card">
-          <div class="card-title grad-text">🔑 สร้างคีย์ใหม่</div>
+          <div class="card-title" style="color:#ef4444;">🔑 CREATE PERSONAL KEY</div>
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:12px;">
             <div>
-              <label style="font-size:11px;color:#9ca3af;display:block;margin-bottom:6px;">จำนวนคนใช้สูงสุด</label>
+              <label style="font-size:7px;color:#9ca3af;display:block;margin-bottom:6px;">MAX USERS</label>
               <input id="max-uses" class="inp" type="number" value="1" min="1" max="9999">
             </div>
             <div>
-              <label style="font-size:11px;color:#9ca3af;display:block;margin-bottom:6px;">อายุคีย์</label>
+              <label style="font-size:7px;color:#9ca3af;display:block;margin-bottom:6px;">DURATION</label>
               <select id="duration" class="inp">
-                <option value="1">1 วัน</option><option value="2">2 วัน</option><option value="3">3 วัน</option>
-                <option value="7">7 วัน</option><option value="30">1 เดือน</option><option value="90">3 เดือน</option>
-                <option value="365">1 ปี</option><option value="0">ถาวร (ตลอดชีพ)</option>
+                <option value="1">1 Day</option><option value="3">3 Days</option>
+                <option value="7">7 Days</option><option value="30">1 Month</option>
+                <option value="0">Lifetime</option>
               </select>
             </div>
             <div>
-              <label style="font-size:11px;color:#9ca3af;display:block;margin-bottom:6px;">จำนวนที่จะเจน</label>
+              <label style="font-size:7px;color:#9ca3af;display:block;margin-bottom:6px;">AMOUNT</label>
               <input id="count" class="inp" type="number" value="1" min="1" max="50">
             </div>
             <div>
-              <label style="font-size:11px;color:#9ca3af;display:block;margin-bottom:6px;">ชื่อโปรเจกต์ / ลูกค้า</label>
-              <input id="name" class="inp" placeholder="ชื่อโปรเจกต์">
+              <label style="font-size:7px;color:#9ca3af;display:block;margin-bottom:6px;">PROJECT NAME</label>
+              <input id="name" class="inp" placeholder="Project Name">
             </div>
           </div>
           <div style="margin-bottom:12px;">
-            <label style="font-size:11px;color:#9ca3af;display:block;margin-bottom:6px;">สคริปต์หลัก (Lua) — เก็บบบนเซิร์ฟเวอร์</label>
+            <label style="font-size:7px;color:#9ca3af;display:block;margin-bottom:6px;">MAIN LUA SCRIPT</label>
             <textarea id="script" class="inp" rows="4" placeholder="print('NYVEXHUB Connected!')"></textarea>
           </div>
-          <div class="card card-purple" style="margin-bottom:12px;padding:14px;">
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:8px;">
-              <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;"><input id="protect" type="checkbox" checked style="accent-color:var(--red);"> 🛡️ ป้องกัน 3 ชั้น + hook 4 จุด</label>
-              <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;"><input id="kick" type="checkbox" checked style="accent-color:var(--red);"> 🚪 เตะออกเมื่อโดนจับ</label>
-              <div style="display:flex;gap:6px;">
-                <input id="sound" class="inp" style="flex:1;" placeholder="Sound ID เสียงเตือน">
-                <button id="sound-test" class="btn btn-ghost btn-sm">🔊</button>
-              </div>
-            </div>
-          </div>
-          <button id="gen" class="btn btn-red btn-full" style="padding:13px;font-size:14px;">🚀 เจนคีย์ NYVEXHUB</button>
+          <button id="gen" class="btn btn-red btn-full" style="padding:14px;">GENERATE KEY</button>
         </div>
       </div>
 
-      <!-- ประกาศ -->
+      <!-- Tab 2: Announcement -->
       <div class="tab-panel" data-tab="announce">
         <div class="card card-purple">
-          <div class="card-title" style="color:#a78bfa;">📢 ส่งประกาศถึงลูกค้าออนไลน์</div>
-          <textarea id="announcement-text" class="inp" rows="3" placeholder="พิมพ์ข้อความประกาศ..."></textarea>
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-top:10px;margin-bottom:12px;">
-            <label style="display:flex;align-items:center;gap:8px;font-size:12px;background:rgba(0,0,0,0.3);padding:8px 12px;border-radius:8px;cursor:pointer;border:1px solid var(--border);"><input id="ann-sound-on" type="checkbox" style="accent-color:var(--red);"> 🔊 เล่นเสียง</label>
-            <input id="ann-sound-id" class="inp" placeholder="Sound ID">
-            <label style="display:flex;align-items:center;gap:8px;font-size:12px;background:rgba(0,0,0,0.3);padding:8px 12px;border-radius:8px;cursor:pointer;border:1px solid var(--border);"><input id="ann-reply-on" type="checkbox" style="accent-color:var(--red);"> 💬 ให้ตอบกลับได้</label>
-          </div>
-          <button id="announce-btn" class="btn btn-full" style="background:linear-gradient(135deg,#7c3aed,#dc2626);color:white;padding:12px;font-size:14px;">🚀 ส่งประกาศ</button>
-          <div id="ann-cooldown-bar"><div id="ann-cooldown-fill"></div></div>
-          <p id="ann-cooldown-txt" style="font-size:11px;color:#f87171;margin-top:6px;min-height:16px;"></p>
+          <div class="card-title" style="color:#a78bfa;">📢 BROADCAST ANNOUNCEMENT</div>
+          <textarea id="announcement-text" class="inp" rows="3" placeholder="Type announcement message..."></textarea>
+          <button id="announce-btn" class="btn btn-purple btn-full" style="margin-top:12px;">SEND BROADCAST</button>
         </div>
       </div>
 
-      <!-- ผู้เล่นออนไลน์ -->
+      <!-- Tab 3: Online Players -->
       <div class="tab-panel" data-tab="players">
         <div class="card">
-          <div class="card-title grad-text">👁️ ผู้เล่นออนไลน์</div>
+          <div class="card-title" style="color:#4ade80;">👁️ ONLINE PLAYERS</div>
           <div class="tbl-wrap"><table class="tbl">
-            <thead><tr><th>สถานะ</th><th>Username</th><th>UserId</th><th>PlaceId</th><th>JobId</th><th>คีย์</th><th>เห็นล่าสุด</th><th>จัดการ</th></tr></thead>
+            <thead><tr><th>Status</th><th>Username</th><th>UserId</th><th>PlaceId</th><th>JobId</th><th>Key</th><th>Actions</th></tr></thead>
             <tbody id="players"></tbody>
           </table></div>
         </div>
       </div>
 
-      <!-- คีย์ทั้งหมด -->
+      <!-- Tab 4: All Keys -->
       <div class="tab-panel" data-tab="keys">
         <div class="card">
-          <div class="card-title grad-text">📋 คีย์ทั้งหมดในระบบ</div>
+          <div class="card-title" style="color:#facc15;">📋 MY KEYS LIST</div>
           <div class="tbl-wrap"><table class="tbl">
-            <thead><tr><th>Key Code</th><th>โปรเจกต์</th><th>อายุ</th><th>ผู้ใช้</th><th>สร้างโดย</th><th>จัดการ</th></tr></thead>
+            <thead><tr><th>Key Code</th><th>Project</th><th>Expires</th><th>Users</th><th>Created By</th><th>Actions</th></tr></thead>
             <tbody id="keys"></tbody>
           </table></div>
         </div>
       </div>
 
-      <!-- ห้องพูดคุย + คีย์ส่วนรวม -->
+      <!-- Tab 5: Group Chat & Room Keys -->
       <div class="tab-panel" data-tab="chat">
         <div class="card">
-          <div class="card-title" style="color:#818cf8;">💬 ห้องพูดคุยทีม</div>
-          <div id="chat-box"></div>
-          <div style="display:flex;gap:8px;margin-top:10px;align-items:center;">
-            <input id="chat-text" class="inp" style="flex:1;" placeholder="พิมพ์ข้อความ...">
-            <label class="btn btn-ghost btn-sm" style="cursor:pointer;">📷<input id="chat-img" type="file" accept="image/*" style="display:none;"></label>
-            <button id="chat-send" class="btn btn-purple btn-sm">ส่ง</button>
+          <div class="card-title" style="color:#818cf8;">💬 TEAM CHAT</div>
+          <div id="chat-box" style="height:220px;overflow-y:auto;background:rgba(0,0,0,0.5);border-radius:10px;padding:12px;margin-bottom:12px;"></div>
+          <div style="display:flex;gap:8px;">
+            <input id="chat-text" class="inp" style="flex:1;" placeholder="Type message...">
+            <button id="chat-send" class="btn btn-purple">Send</button>
           </div>
-          <p id="chat-img-name" style="font-size:10px;color:#6b7280;margin-top:4px;"></p>
         </div>
-
         <div class="card card-yellow">
-          <div class="card-title" style="color:#facc15;">🔑 คีย์ส่วนรวมของห้องนี้</div>
-          <p style="font-size:11px;color:#6b7280;margin-bottom:10px;">สร้างคีย์กลางที่ใช้ร่วมกันในทีม (แยกจากคีย์ส่วนตัวของแต่ละคน)</p>
+          <div class="card-title" style="color:#facc15;">🔑 PUBLIC ROOM KEYS</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
-            <input id="room-name" class="inp" placeholder="ชื่อโปรเจกต์กลาง">
-            <input id="room-maxuses" class="inp" type="number" value="5" placeholder="จำนวนคนใช้">
+            <input id="room-name" class="inp" placeholder="Project Name">
+            <input id="room-maxuses" class="inp" type="number" value="1" placeholder="Max Uses">
           </div>
-          <textarea id="room-script" class="inp" rows="2" placeholder="สคริปต์ส่วนรวม"></textarea>
-          <button id="room-gen" class="btn btn-sm" style="background:rgba(234,179,8,0.2);color:#facc15;border:1px solid rgba(234,179,8,0.3);margin-top:8px;margin-bottom:12px;">➕ สร้างคีย์ส่วนรวม</button>
-          <table class="tbl"><thead><tr><th>Key</th><th>โปรเจกต์</th><th>สร้างโดย</th><th>ผู้ใช้</th></tr></thead><tbody id="room-keys"></tbody></table>
+          <textarea id="room-script" class="inp" rows="2" placeholder="Lua Script for Public Key"></textarea>
+          <button id="room-gen" class="btn btn-ghost btn-sm" style="margin-top:8px;">+ Generate Room Key</button>
+          <div class="tbl-wrap" style="margin-top:12px;"><table class="tbl"><thead><tr><th>Key</th><th>Project</th><th>Created By</th><th>Users</th></tr></thead><tbody id="room-keys"></tbody></table></div>
         </div>
       </div>
 
-      <!-- ประวัติลูกค้า -->
+      <!-- Tab 6: Audit Logs -->
       <div class="tab-panel" data-tab="custlog">
         <div class="card">
-          <div class="card-title grad-text">🕑 ประวัติลูกค้า / คีย์ส่วนตัว</div>
-          <div class="tbl-scroll"><table class="tbl"><thead><tr><th>เวลา</th><th>ผู้ใช้</th><th>การกระทำ</th><th>รายละเอียด</th></tr></thead><tbody id="cust-log-list"></tbody></table></div>
+          <div class="card-title">🕑 CLIENT AUDIT LOGS</div>
+          <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Time</th><th>User</th><th>Action</th><th>Detail</th></tr></thead><tbody id="cust-log-list"></tbody></table></div>
         </div>
       </div>
 
-      <!-- บัญชีแอดมิน (owner) -->
+      <!-- Tab 7: Admins -->
       <div class="tab-panel" data-tab="admins">
         <div class="card card-red">
-          <div class="card-title" style="color:#f87171;">👑 [OWNER ONLY] จัดการบัญชีแอดมิน</div>
-          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
-            <input id="u-name" class="inp" style="flex:1;min-width:140px;" placeholder="ชื่อผู้ใช้ใหม่">
-            <input id="u-pass" class="inp" style="flex:1;min-width:140px;" placeholder="รหัสผ่าน (4+ ตัว)">
-            <button id="u-create" class="btn btn-red">➕ สร้างบัญชี</button>
+          <div class="card-title" style="color:#f87171;">👑 ADMIN ACCOUNTS</div>
+          <div style="display:flex;gap:8px;margin-bottom:12px;">
+            <input id="u-name" class="inp" placeholder="Username">
+            <input id="u-pass" class="inp" placeholder="Password (4+ chars)">
+            <button id="u-create" class="btn btn-red">Create Admin</button>
           </div>
-          <div class="tbl-wrap"><table class="tbl"><thead><tr><th>ชื่อผู้ใช้</th><th>สิทธิ์</th><th>สร้างเมื่อ</th><th>จัดการ</th></tr></thead><tbody id="u-list"></tbody></table></div>
+          <div class="tbl-wrap"><table class="tbl"><thead><tr><th>User</th><th>Role</th><th>Created At</th><th>Actions</th></tr></thead><tbody id="u-list"></tbody></table></div>
         </div>
       </div>
 
-      <!-- ประวัติระบบ (owner) -->
+      <!-- Tab 8: System Logs -->
       <div class="tab-panel" data-tab="syslog">
         <div class="card card-red">
-          <div class="card-title" style="color:#f87171;">🔒 [OWNER ONLY] ประวัติระบบทั้งหมด</div>
-          <div class="tbl-scroll"><table class="tbl"><thead><tr><th>เวลา</th><th>ผู้ใช้</th><th>การกระทำ</th><th>รายละเอียด</th></tr></thead><tbody id="audit-list"></tbody></table></div>
+          <div class="card-title" style="color:#f87171;">🔒 SYSTEM FULL LOGS</div>
+          <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Time</th><th>User</th><th>Action</th><th>Detail</th></tr></thead><tbody id="audit-list"></tbody></table></div>
         </div>
       </div>
 
@@ -365,10 +522,8 @@ const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt = t => t ? new Date(t).toLocaleString('th-TH') : '-';
 let TOKEN = localStorage.getItem('nvex_token') || '';
-let _justLoggedIn = false;
 let ME = { username: '', role: '' };
 let DATA = { keys: [], now: Date.now(), onlineMs: 90000 };
-let chatImageData = null;
 
 async function api(p, body) {
   const r = await fetch('/api/admin/' + p, {
@@ -380,8 +535,15 @@ async function api(p, body) {
   return r.json();
 }
 
-function showApp() { $('login-screen').style.display = 'none'; $('layout').style.display = 'flex'; }
-function showLogin(msg) { $('layout').style.display = 'none'; $('login-screen').style.display = 'flex'; if (msg !== undefined) $('l-err').textContent = msg; }
+function showApp() {
+  $('login-screen').style.display = 'none';
+  $('layout').style.display = 'flex';
+}
+function showLogin(msg) {
+  $('layout').style.display = 'none';
+  $('login-screen').style.display = 'flex';
+  if (msg !== undefined) $('l-err').textContent = msg;
+}
 
 function doLogout(callServer) {
   if (callServer) fetch('/api/auth/logout', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ token: TOKEN }) }).catch(() => {});
@@ -391,176 +553,37 @@ function doLogout(callServer) {
 $('l-btn').onclick = async () => {
   $('l-err').textContent = '';
   const username = $('l-user').value.trim(), password = $('l-pass').value;
-  if (!username || !password) return $('l-err').textContent = 'กรอกข้อมูลให้ครบถ้วน';
+  if (!username || !password) return $('l-err').textContent = 'PLEASE FILL ALL FIELDS';
   const r = await fetch('/api/auth/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ username, password }) }).then(x => x.json());
-  if (!r.ok) return $('l-err').textContent = r.msg || 'เข้าสู่ระบบไม่สำเร็จ';
+  if (!r.ok) return $('l-err').textContent = r.msg || 'LOGIN FAILED';
   TOKEN = r.token; localStorage.setItem('nvex_token', TOKEN);
   ME = { username: r.username, role: r.role };
-  _justLoggedIn = true;
   afterLogin();
+  showWelcome(ME.username);
 };
 $('logout-btn').onclick = () => doLogout(true);
 
 function afterLogin() {
   $('me-name').textContent = ME.username;
-  $('me-role').textContent = ME.role === 'owner' ? '👑 เจ้าของระบบ' : '🛡️ แอดมิน';
+  $('me-role').textContent = ME.role === 'owner' ? '👑 OWNER' : '🛡️ ADMIN';
   $('user-avatar-letter').textContent = ME.username[0].toUpperCase();
   const isOwner = ME.role === 'owner';
   $('owner-nav').style.display = isOwner ? 'block' : 'none';
   showApp();
-  if (_justLoggedIn) { _justLoggedIn = false; showWelcome(ME.username); }
   refresh();
   if (window.__poll) clearInterval(window.__poll);
   window.__poll = setInterval(refresh, 5000);
 }
 
-// Navigation Tabs
 document.querySelectorAll('.nav-item').forEach(b => b.onclick = () => {
-  switchTab(b.dataset.tab);
-  $('sidebar').classList.remove('open');
-  $('sidebar-overlay').classList.remove('show');
+  const tab = b.dataset.tab;
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.dataset.tab === tab));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.tab === tab));
+  if (tab === 'custlog') refreshCustLog();
+  if (tab === 'admins') refreshUsers();
+  if (tab === 'syslog') refreshAudit();
+  if (tab === 'chat') refreshChat();
 });
-
-function switchTab(id) {
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.dataset.tab === id));
-  document.querySelectorAll('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.tab === id));
-  if (window.__chatPoll) { clearInterval(window.__chatPoll); window.__chatPoll = null; }
-  if (id === 'custlog') refreshCustLog();
-  if (id === 'admins') refreshUsers();
-  if (id === 'syslog') refreshAudit();
-  if (id === 'chat') { refreshChat(); window.__chatPoll = setInterval(refreshChat, 4000); }
-}
-
-async function refreshUsers() {
-  const r = await api('users/list');
-  if (!r.ok) return;
-  $('u-list').innerHTML = r.users.map(u => `<tr>
-    <td style="font-weight:600;">${esc(u.username)}</td>
-    <td>${u.role === 'owner' ? '<span class="badge badge-red">👑 เจ้าของ</span>' : '<span class="badge badge-purple">🛡️ แอดมิน</span>'}</td>
-    <td style="color:#6b7280;font-size:11px;">${fmt(u.createdAt)}</td>
-    <td>${u.role === 'owner' ? '-' : `<button data-u="${esc(u.username)}" class="btn btn-sm u-del" style="background:rgba(220,38,38,0.15);color:#f87171;border:1px solid var(--border-red);">ลบ</button>`}</td>
-  </tr>`).join('') || '<tr><td colspan="4" style="text-align:center;color:#4b5563;padding:20px;">ยังไม่มีบัญชีแอดมิน</td></tr>';
-  document.querySelectorAll('.u-del').forEach(b => b.onclick = async () => {
-    if (!confirm('ลบบัญชี ' + b.dataset.u + ' ?')) return;
-    await api('users/delete', { username: b.dataset.u }); refreshUsers();
-  });
-}
-$('u-create').onclick = async () => {
-  const username = $('u-name').value.trim(), password = $('u-pass').value;
-  const r = await api('users/create', { username, password });
-  if (!r.ok) return alert(r.msg || 'ผิดพลาด');
-  $('u-name').value = ''; $('u-pass').value = ''; alert('สร้างบัญชีแอดมินสำเร็จ'); refreshUsers();
-};
-
-async function refreshCustLog() {
-  const r = await api('logs');
-  if (!r.ok) return;
-  $('cust-log-list').innerHTML = r.logs.map(l => `<tr>
-    <td style="color:#6b7280;font-size:10px;white-space:nowrap;">${fmt(l.t)}</td>
-    <td style="font-weight:600;">${esc(l.user)}</td>
-    <td><span class="badge badge-gray">${esc(l.action)}</span></td>
-    <td style="color:#9ca3af;font-size:11px;">${esc(l.detail)}</td>
-  </tr>`).join('') || '<tr><td colspan="4" style="text-align:center;color:#4b5563;padding:20px;">ยังไม่มีประวัติ</td></tr>';
-}
-
-async function refreshAudit() {
-  const r = await api('audit');
-  if (!r.ok) return;
-  $('audit-list').innerHTML = r.logs.map(l => `<tr>
-    <td style="color:#6b7280;font-size:10px;white-space:nowrap;">${fmt(l.t)}</td>
-    <td style="font-weight:600;">${esc(l.user)}</td>
-    <td><span class="badge badge-gray">${esc(l.action)}</span></td>
-    <td style="color:#9ca3af;font-size:11px;">${esc(l.detail)}</td>
-  </tr>`).join('') || '<tr><td colspan="4" style="text-align:center;color:#4b5563;padding:20px;">ยังไม่มีประวัติ</td></tr>';
-}
-
-async function refreshChat() {
-  const r = await api('chat/list');
-  if (!r.ok) return;
-  $('chat-box').innerHTML = r.messages.map(m => {
-    const mine = m.user === ME.username;
-    return `<div class="chat-msg ${mine ? 'mine' : 'other'}">
-      <div class="chat-meta">${esc(m.user)} · ${fmt(m.t)}</div>
-      <div class="chat-bubble">
-        ${m.text ? `<div>${esc(m.text)}</div>` : ''}
-        ${m.image ? `<img src="${m.image}" style="max-height:160px;border-radius:8px;margin-top:6px;">` : ''}
-      </div>
-    </div>`;
-  }).join('') || '<div style="text-align:center;color:#4b5563;font-size:12px;padding:40px 0;">ยังไม่มีข้อความ</div>';
-  $('chat-box').scrollTop = $('chat-box').scrollHeight;
-  refreshRoomKeys();
-}
-
-$('chat-img').onchange = () => {
-  const file = $('chat-img').files[0];
-  if (!file) { chatImageData = null; $('chat-img-name').textContent = ''; return; }
-  const reader = new FileReader();
-  reader.onload = () => { chatImageData = reader.result; $('chat-img-name').textContent = '📎 ' + file.name; };
-  reader.readAsDataURL(file);
-};
-
-$('chat-send').onclick = async () => {
-  const text = $('chat-text').value.trim();
-  if (!text && !chatImageData) return;
-  await api('chat/send', { text, image: chatImageData });
-  $('chat-text').value = ''; chatImageData = null; $('chat-img').value = ''; $('chat-img-name').textContent = '';
-  refreshChat();
-};
-
-function refreshRoomKeys() {
-  const roomKeys = (DATA.keys || []).filter(k => k.room);
-  $('room-keys').innerHTML = roomKeys.length ? roomKeys.map(k => `<tr>
-    <td style="font-family:monospace;color:#facc15;">${esc(k.key)}</td><td>${esc(k.name)}</td><td>${esc(k.createdBy || '-')}</td><td style="text-align:center;">${Object.keys(k.users || {}).length}/${k.maxUses}</td></tr>`).join('')
-    : '<tr><td colspan="4" style="text-align:center;color:#4b5563;padding:12px;">ยังไม่มีคีย์ส่วนรวม</td></tr>';
-}
-
-$('room-gen').onclick = async () => {
-  const script = $('room-script').value.trim();
-  if (!script) return alert('กรุณาใส่สคริปต์สำหรับคีย์ส่วนรวม');
-  const r = await api('create', {
-    maxUses: $('room-maxuses').value, durationDays: '30', count: '1',
-    name: $('room-name').value || 'คีย์ส่วนรวม', script, room: true
-  });
-  if (!r.ok) return alert(r.msg || 'ผิดพลาด');
-  alert('สร้างคีย์ส่วนรวมสำเร็จ:\n' + r.keys.join('\n'));
-  $('room-script').value = ''; $('room-name').value = '';
-  refresh();
-};
-
-$('announce-btn').onclick = async () => {
-  const text = $('announcement-text').value.trim();
-  if (!text) return;
-  await api('announce', { text, sound: $('ann-sound-on').checked ? $('ann-sound-id').value : '', allowReply: $('ann-reply-on').checked });
-  $('announcement-text').value = ''; alert('ส่งประกาศแล้ว');
-};
-
-$('sound-test').onclick = () => {
-  const id = $('sound').value.replace(/\D/g, '');
-  if (id) window.open('https://www.roblox.com/library/' + id, '_blank');
-};
-
-const rn = () => '_' + Math.random().toString(36).slice(2, 8);
-const rk = () => Array.from({ length: 12 }, () => 1 + Math.floor(Math.random() * 254));
-const enc = (txt, k) => { const b = new TextEncoder().encode(txt); let o = ''; for (let i = 0; i < b.length; i++) o += '\\' + String(b[i] ^ k[i % k.length]).padStart(3, '0'); return o; };
-
-function protect(src, o) {
-  const names = Array.from({ length: 10 }, rn);
-  const [T, C, X, D] = names;
-  const keys = Array.from({ length: 3 }, rk);
-  const snd = o.sound ? `pcall(function() local s=Instance.new("Sound",workspace) s.SoundId="rbxassetid://${o.sound}" s.Volume=10 s:Play() end)` : '';
-  const kick = o.kick ? `pcall(function() game:GetService("Players").LocalPlayer:Kick("Tampering detected") end)` : '';
-  let layer = `local ${T},${C},${X}=...\n${C}()\n${src}`;
-  for (let i = 1; i >= 0; i--) {
-    const k = keys[i];
-    layer = `local ${T},${C},${X},${D}=...\n${C}()\nlocal f=loadstring(${D}("${enc(layer, k)}",{${k}}))\nif f then f(${T},${C},${X},${D}) end`;
-  }
-  return `local ${X}=__X\nlocal function ${D}(s,k) local b=(bit32 or bit).bxor local o={} for i=1,#s do o[i]=string.char(b(s:byte(i),k[(i-1)%#k+1])) end return table.concat(o) end\nlocal function ${T}() ${snd} ${kick} end\nlocal function ${C}() end\nlocal f=loadstring(${D}("${enc(layer, keys[2])}",{${keys[2]}}))\nif f then f(${T},${C},${X},${D}) end`;
-}
-
-function durLabel(d) {
-  if (!d) return 'ถาวร';
-  return ({30:'1 เดือน',90:'3 เดือน',365:'1 ปี'})[d] || d + ' วัน';
-}
 
 function render() {
   const { keys, now, onlineMs } = DATA;
@@ -568,48 +591,44 @@ function render() {
   keys.forEach(k => Object.entries(k.users || {}).forEach(([h, u]) => rows.push({ k, h, u })));
   rows.sort((a, b) => b.u.lastSeen - a.u.lastSeen);
   const on = rows.filter(r => now - r.u.lastSeen < onlineMs).length;
-  $('st-online').textContent = on; $('st-keys').textContent = keys.length;
+  $('st-online').textContent = on;
+  $('st-keys').textContent = keys.length;
 
   $('players').innerHTML = rows.length ? rows.map(({ k, h, u }) => {
     const online = now - u.lastSeen < onlineMs;
     return `<tr>
-      <td>${online ? '<span class="badge badge-green pulse">● ออนไลน์</span>' : '<span class="badge badge-gray">● ออฟไลน์</span>'}</td>
-      <td style="font-weight:600;">${esc(u.username)}</td>
-      <td style="color:#6b7280;">${esc(u.userId)}</td>
-      <td style="color:#6b7280;">${esc(u.placeId)}</td>
-      <td style="color:#4b5563;font-size:10px;">${esc(u.jobId)}</td>
-      <td><span style="font-family:monospace;color:#facc15;font-size:11px;">${esc(k.key)}</span></td>
-      <td style="color:#6b7280;font-size:11px;">${fmt(u.lastSeen)}</td>
-      <td><button data-p="${esc(u.placeId)}" data-j="${esc(u.jobId)}" data-k="${esc(k.key)}" class="btn btn-purple btn-sm warp-join-btn">🚀 จอย</button></td>
+      <td>${online ? '<span class="badge badge-green">ONLINE</span>' : '<span class="badge badge-gray">OFFLINE</span>'}</td>
+      <td><strong>${esc(u.username)}</strong></td>
+      <td>${esc(u.userId)}</td>
+      <td>${esc(u.placeId)}</td>
+      <td>${esc(u.jobId)}</td>
+      <td><span style="color:#facc15;">${esc(k.key)}</span></td>
+      <td><button data-p="${esc(u.placeId)}" data-j="${esc(u.jobId)}" class="btn btn-purple btn-sm warp-join-btn">JOIN</button></td>
     </tr>`;
-  }).join('') : '<tr><td colspan="8" style="text-align:center;color:#4b5563;padding:24px;">ยังไม่มีผู้เล่นออนไลน์</td></tr>';
-
-  document.querySelectorAll('.warp-join-btn').forEach(b => b.onclick = async () => {
-    const link = `roblox://experiences/start?placeId=${b.dataset.p}&gameInstanceId=${b.dataset.j}`;
-    window.open(link);
-    if (b.dataset.k) await api('notify-key', { key: b.dataset.k });
-  });
+  }).join('') : '<tr><td colspan="7" style="text-align:center;color:#6b7280;">No online players</td></tr>';
 
   $('keys').innerHTML = keys.length ? keys.map(k => {
     const expired = k.expiresAt && now > k.expiresAt;
-    const st = k.banned ? '<span class="badge badge-red">ระงับ</span>' : expired ? '<span class="badge badge-red">หมดอายุ</span>' : '<span class="badge badge-green">ใช้งานได้</span>';
+    const st = k.banned ? '<span class="badge badge-red">BANNED</span>' : expired ? '<span class="badge badge-red">EXPIRED</span>' : '<span class="badge badge-green">ACTIVE</span>';
     return `<tr data-k="${esc(k.key)}">
-      <td><span style="font-family:monospace;color:#facc15;font-size:11px;">${esc(k.key)}</span> ${st}</td>
+      <td><span style="color:#facc15;">${esc(k.key)}</span> ${st}</td>
       <td style="color:#a78bfa;">${esc(k.name)}</td>
-      <td style="font-size:11px;color:#9ca3af;">${durLabel(k.durationDays)}</td>
-      <td style="text-align:center;font-weight:700;color:#4ade80;">${Object.keys(k.users).length}/${k.maxUses}</td>
-      <td style="font-size:11px;color:#6b7280;">${esc(k.createdBy || '-')}</td>
+      <td>${k.durationDays ? k.durationDays + ' Days' : 'Lifetime'}</td>
+      <td style="color:#4ade80;">${Object.keys(k.users).length}/${k.maxUses}</td>
+      <td style="color:#6b7280;">${esc(k.createdBy || '-')}</td>
       <td>
-        <button data-a="copy" class="btn btn-ghost btn-sm" style="margin-right:3px;">📋 โค้ด</button>
-        <button data-a="delete" class="btn btn-sm" style="background:rgba(220,38,38,0.15);color:#f87171;">ลบ</button>
+        <button data-a="copy" class="btn btn-ghost btn-sm">Copy Code</button>
+        <button data-a="reset" class="btn btn-ghost btn-sm">Reset</button>
+        <button data-a="ban" class="btn btn-sm" style="background:rgba(234,179,8,0.2);color:#facc15;">${k.banned ? 'Unban' : 'Ban'}</button>
+        <button data-a="delete" class="btn btn-sm" style="background:rgba(220,38,38,0.2);color:#f87171;">Delete</button>
       </td>
     </tr>`;
-  }).join('') : '<tr><td colspan="6" style="text-align:center;color:#4b5563;padding:24px;">ยังไม่มีคีย์ในระบบ</td></tr>';
+  }).join('') : '<tr><td colspan="6" style="text-align:center;color:#6b7280;">No keys created yet</td></tr>';
 }
 
 async function refresh() {
   const r = await api('list');
-  if (r.ok) { DATA = r; render(); if (!document.querySelector('[data-tab="chat"]').classList.contains('hidden')) refreshRoomKeys(); }
+  if (r.ok) { DATA = r; render(); refreshRoomKeys(); }
 }
 
 $('keys').addEventListener('click', async e => {
@@ -617,28 +636,127 @@ $('keys').addEventListener('click', async e => {
   const key = e.target.closest('tr').dataset.k;
   if (a === 'copy') {
     const code = `getgenv().Key = "${key}"\nloadstring(game:HttpGet("${location.origin}/api/loader"))()`;
-    await navigator.clipboard.writeText(code); return alert('คัดลอกโค้ดสำเร็จ');
+    await navigator.clipboard.writeText(code); return alert('Copied loader code to clipboard!');
   }
-  if (a === 'delete' && !confirm('ยืนยันการลบคีย์?')) return;
+  if (a === 'delete' && !confirm('Delete key?')) return;
+  if (a === 'reset' && !confirm('Reset users?')) return;
   await api(a, { key }); refresh();
 });
 
 $('gen').onclick = async () => {
-  const rawScript = $('script').value;
-  const finalScript = $('protect').checked && rawScript.trim() ? protect(rawScript, { sound: $('sound').value.replace(/\D/g, ''), kick: $('kick').checked }) : rawScript;
+  const script = $('script').value;
+  if (!script.trim()) return alert('Please input script');
   const r = await api('create', {
     maxUses: $('max-uses').value, durationDays: $('duration').value,
-    count: $('count').value, name: $('name').value, script: finalScript
+    count: $('count').value, name: $('name').value, script, room: false
   });
-  if (!r.ok) return alert(r.msg || 'ผิดพลาด');
-  alert('สร้างคีย์สำเร็จ:\n' + r.keys.join('\n'));
+  if (!r.ok) return alert(r.msg || 'Error');
+  alert('🎉 Keys generated:\n' + r.keys.join('\n'));
   refresh();
 };
 
-$('hamburger').onclick = () => { $('sidebar').classList.toggle('open'); $('sidebar-overlay').classList.toggle('show'); };
-$('sidebar-overlay').onclick = () => { $('sidebar').classList.remove('open'); $('sidebar-overlay').classList.remove('show'); };
+function refreshRoomKeys() {
+  const roomKeys = (DATA.keys || []).filter(k => k.room);
+  $('room-keys').innerHTML = roomKeys.length ? roomKeys.map(k => `<tr>
+    <td style="color:#facc15;">${esc(k.key)}</td><td>${esc(k.name)}</td>
+    <td>${esc(k.createdBy || '-')}</td><td>${Object.keys(k.users || {}).length}/${k.maxUses}</td></tr>`).join('')
+    : '<tr><td colspan="4" style="text-align:center;color:#6b7280;">No room keys created</td></tr>';
+}
+$('room-gen').onclick = async () => {
+  const script = $('room-script').value.trim();
+  if (!script) return alert('Please input script');
+  const r = await api('create', {
+    maxUses: $('room-maxuses').value, durationDays: '30', count: '1',
+    name: $('room-name').value || 'Room Key', script, room: true
+  });
+  if (!r.ok) return alert(r.msg || 'Error');
+  alert('🎉 Public Room Key Created:\n' + r.keys.join('\n'));
+  $('room-script').value = ''; $('room-name').value = '';
+  refresh();
+};
 
-// Typewriter Welcome Effect
+async function refreshCustLog() {
+  const r = await api('logs');
+  if (!r.ok) return;
+  $('cust-log-list').innerHTML = r.logs.map(l => `<tr>
+    <td style="color:#6b7280;">${fmt(l.t)}</td><td><strong>${esc(l.user)}</strong></td>
+    <td><span class="badge badge-purple">${esc(l.action)}</span></td><td style="color:#9ca3af;">${esc(l.detail)}</td>
+  </tr>`).join('');
+}
+async function refreshAudit() {
+  const r = await api('audit');
+  if (!r.ok) return;
+  $('audit-list').innerHTML = r.logs.map(l => `<tr>
+    <td style="color:#6b7280;">${fmt(l.t)}</td><td><strong>${esc(l.user)}</strong></td>
+    <td><span class="badge badge-gray">${esc(l.action)}</span></td><td style="color:#9ca3af;">${esc(l.detail)}</td>
+  </tr>`).join('');
+}
+async function refreshUsers() {
+  const r = await api('users/list');
+  if (!r.ok) return;
+  $('u-list').innerHTML = r.users.map(u => `<tr>
+    <td><strong>${esc(u.username)}</strong></td>
+    <td>${u.role === 'owner' ? '<span class="badge badge-red">OWNER</span>' : '<span class="badge badge-purple">ADMIN</span>'}</td>
+    <td style="color:#6b7280;">${fmt(u.createdAt)}</td>
+    <td>${u.role === 'owner' ? '-' : `<button data-u="${esc(u.username)}" class="btn btn-sm u-del" style="background:rgba(220,38,38,0.2);color:#f87171;">Delete</button>`}</td>
+  </tr>`).join('');
+  document.querySelectorAll('.u-del').forEach(b => b.onclick = async () => {
+    if (!confirm('Delete user ' + b.dataset.u + '?')) return;
+    await api('users/delete', { username: b.dataset.u }); refreshUsers();
+  });
+}
+$('u-create').onclick = async () => {
+  const username = $('u-name').value.trim(), password = $('u-pass').value;
+  const r = await api('users/create', { username, password });
+  if (!r.ok) return alert(r.msg || 'Error');
+  $('u-name').value = ''; $('u-pass').value = ''; alert('Admin created'); refreshUsers();
+};
+
+async function refreshChat() {
+  const r = await api('chat/list');
+  if (!r.ok) return;
+  $('chat-box').innerHTML = r.messages.map(m => `
+    <div style="margin-bottom:8px;text-align:${m.user === ME.username ? 'right' : 'left'};">
+      <div style="font-size:6px;color:#6b7280;">${esc(m.user)} - ${fmt(m.t)}</div>
+      <div style="display:inline-block;padding:8px 12px;border-radius:10px;background:${m.user === ME.username ? '#7c3aed' : '#27272a'};color:#fff;">${esc(m.text)}</div>
+    </div>`).join('');
+  $('chat-box').scrollTop = $('chat-box').scrollHeight;
+}
+$('chat-send').onclick = async () => {
+  const text = $('chat-text').value.trim();
+  if (!text) return;
+  await api('chat/send', { text });
+  $('chat-text').value = '';
+  refreshChat();
+};
+
+// Background Canvas Effect
+(function initCanvas() {
+  const cvs = $('bg-canvas');
+  if (!cvs) return;
+  const ctx = cvs.getContext('2d');
+  function resize() { cvs.width = window.innerWidth; cvs.height = window.innerHeight; }
+  resize(); window.addEventListener('resize', resize);
+  let parts = Array.from({length: 60}, () => ({
+    x: Math.random()*cvs.width, y: Math.random()*cvs.height,
+    vx: (Math.random()-.5)*0.5, vy: (Math.random()-.5)*0.5,
+    r: Math.random()*1.5+0.5
+  }));
+  function loop() {
+    ctx.clearRect(0, 0, cvs.width, cvs.height);
+    ctx.fillStyle = 'rgba(220, 38, 38, 0.3)';
+    parts.forEach(p => {
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < 0 || p.x > cvs.width) p.vx *= -1;
+      if (p.y < 0 || p.y > cvs.height) p.vy *= -1;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2); ctx.fill();
+    });
+    requestAnimationFrame(loop);
+  }
+  loop();
+})();
+
+// Typewriter Welcome Overlay Function
 function showWelcome(username) {
   const ov = $('welcome-overlay');
   const tx = $('welcome-text');
@@ -646,48 +764,30 @@ function showWelcome(username) {
   ov.style.display = 'flex';
   tx.innerHTML = '<span class="wcursor"></span>';
   const cur = tx.querySelector('.wcursor');
-  const msg = 'สวัสดียินดีต้อนรับสู่\nไวลิสสุดโหดของ\nNYVEXHUB';
+  const msg = 'สวัสดียินดีต้อนรับสู่ไวลิสสุดโหดของNYVEXHUB\n[ USER: ' + username + ' ]';
   let i = 0;
   function next() {
     if (i >= msg.length) {
       setTimeout(() => {
         ov.style.transition = 'opacity .8s';
         ov.style.opacity = '0';
-        setTimeout(() => { ov.style.display='none'; ov.style.opacity='1'; ov.style.transition=''; }, 800);
-      }, 1600);
+        setTimeout(() => { ov.style.display = 'none'; ov.style.opacity = '1'; }, 800);
+      }, 1500);
       return;
     }
     const ch = msg[i++];
-    if (ch === '\n') { tx.insertBefore(document.createElement('br'), cur); }
-    else { tx.insertBefore(document.createTextNode(ch), cur); }
-    setTimeout(next, 45);
+    if (ch === '\n') tx.insertBefore(document.createElement('br'), cur);
+    else tx.insertBefore(document.createTextNode(ch), cur);
+    setTimeout(next, ch.charCodeAt(0) > 127 ? 60 : 35);
   }
-  setTimeout(next, 200);
+  setTimeout(next, 300);
 }
 
-// Background Red Lightning Canvas Effect
-(function initLightning() {
-  const cvs = $('bg-canvas'); if (!cvs) return;
-  const ctx = cvs.getContext('2d');
-  function resize() { cvs.width = window.innerWidth; cvs.height = window.innerHeight; }
-  resize(); window.addEventListener('resize', resize);
-  let parts = Array.from({length:50}, () => ({ x: Math.random()*cvs.width, y: Math.random()*cvs.height, vx: (Math.random()-.5)*.3, vy: (Math.random()-.5)*.3, r: Math.random()*1.5+.5, a: Math.random()*.3+.1 }));
-  function loop() {
-    ctx.clearRect(0,0,cvs.width,cvs.height);
-    parts.forEach(p => {
-      p.x+=p.vx; p.y+=p.vy;
-      if(p.x<0)p.x=cvs.width; if(p.x>cvs.width)p.x=0;
-      if(p.y<0)p.y=cvs.height; if(p.y>cvs.height)p.y=0;
-      ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-      ctx.fillStyle='#dc2626'; ctx.globalAlpha=p.a; ctx.fill();
-    });
-    requestAnimationFrame(loop);
-  }
-  loop();
-})();
-
+// Auto Login check
 if (TOKEN) {
-  api('list').then(r => { if (r.ok) { ME = r.me; afterLogin(); } else { showLogin(''); } });
+  api('list').then(r => {
+    if (r.ok) { ME = r.me; afterLogin(); } else { showLogin(''); }
+  });
 } else { showLogin(''); }
 </script>
 </body>
