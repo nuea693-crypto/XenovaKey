@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NYVEXHUB | Shadow Control Panel</title>
+<title>NVEX — Shadow Control Panel</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Kanit:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
 /* ── pixel login ── */
 .pixel-inp{font-family:'Press Start 2P',monospace;font-size:9px;background:rgba(0,0,0,0.75);border:2px solid #2d2d2d;border-radius:4px;color:#e2e8f0;padding:13px 14px;width:100%;outline:none;letter-spacing:1px;margin-bottom:12px;display:block;transition:border-color .15s,box-shadow .15s;}
@@ -16,9 +16,9 @@
 .pixel-btn:hover{box-shadow:0 0 28px rgba(220,38,38,0.7),0 0 28px rgba(109,40,217,0.5);transform:translateY(-1px);}
 #l-err{font-family:'Press Start 2P',monospace;font-size:7px;color:#f87171;margin-top:10px;min-height:14px;letter-spacing:1px;display:block;}
 /* ── canvas BG (always behind everything) ── */
-#bg-canvas{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;}
+#bg-canvas{position:fixed;inset:0;width:100%;height:100%;z-index:1;pointer-events:none;}
 /* ── login screen ── */
-#login-screen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:100;}
+#login-screen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:10;}
 .login-box{position:relative;z-index:10;background:rgba(4,4,8,0.9);border:2px solid #dc2626;padding:36px 32px;width:100%;max-width:360px;text-align:center;box-shadow:0 0 50px rgba(220,38,38,0.3),inset 0 0 30px rgba(220,38,38,0.04);border-radius:8px;backdrop-filter:blur(8px);}
 .login-avatar{width:88px;height:88px;border-radius:50%;border:2px solid #dc2626;box-shadow:0 0 28px rgba(220,38,38,0.65);object-fit:cover;display:block;margin:0 auto 16px;}
 .login-title{font-family:'Press Start 2P',monospace;font-size:13px;color:#fff;text-shadow:0 0 14px #dc2626,0 0 30px rgba(220,38,38,0.35);margin-bottom:8px;letter-spacing:3px;}
@@ -30,7 +30,7 @@
 @keyframes wcur{0%,100%{opacity:1}50%{opacity:0}}
 .wcursor{display:inline-block;width:9px;height:14px;background:#dc2626;animation:wcur .7s step-end infinite;vertical-align:text-bottom;margin-left:2px;}
 /* ── main app sits above canvas ── */
-#layout,#app{position:relative;z-index:10;}
+#layout{position:relative;z-index:5;}#sidebar{z-index:50 !important;}
 </style>
 
 <style>
@@ -156,44 +156,6 @@
   #sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 49; }
   #sidebar-overlay.show { display: block; }
 </style>
-
-<style>
-:root{--font:'Press Start 2P','Kanit',ui-sans-serif,sans-serif}
-*,*::before,*::after{font-family:var(--font)!important}
-body{font-size:10px;line-height:1.9}
-[style*="font-size:10px"]{font-size:8px!important}
-[style*="font-size:11px"],[style*="font-size:12px"],[style*="font-size:13px"]{font-size:9px!important}
-[style*="font-size:14px"],[style*="font-size:15px"]{font-size:10px!important}
-label,p{line-height:1.9}
-#sidebar{width:244px;min-width:244px;background:linear-gradient(180deg,rgba(14,8,18,.97),rgba(8,6,14,.97))}
-@media(min-width:769px){#main{margin-left:244px}}
-.brand-char{width:72px;height:72px;border-width:3px}
-.brand-name{font-size:12px;letter-spacing:2px}.brand-sub{font-size:7px;margin-top:6px}
-.nav-section{font-size:7px;padding:16px 12px 6px;letter-spacing:.14em}
-.nav-item{font-size:9px;padding:12px 14px;border-radius:16px;margin-bottom:4px;border:1px solid transparent;gap:12px}
-.nav-item.active{border:1px solid var(--border-red);box-shadow:0 0 18px rgba(220,38,38,.18)}
-.user-name{font-size:9px}.user-role{font-size:7px}
-.card{border-radius:24px;padding:24px}.card-title{font-size:11px;margin-bottom:16px;gap:8px}
-.inp,.btn,.stat-pill{border-radius:14px}.inp{font-size:9px;padding:13px 14px}.btn{font-size:9px;padding:12px 18px}.btn-sm{font-size:8px;padding:8px 11px;border-radius:11px}
-.tbl{font-size:8px}.tbl th{font-size:7px}.badge{font-size:7px;padding:4px 9px}
-.stat-pill{font-size:8px;padding:7px 14px}
-.login-box{max-width:380px;border-radius:32px;padding:40px 32px 32px;border:1px solid rgba(220,38,38,.55);background:linear-gradient(160deg,rgba(20,8,14,.93),rgba(8,6,18,.95));box-shadow:0 0 70px rgba(220,38,38,.28),0 30px 60px rgba(0,0,0,.6)}
-.login-avatar{width:108px;height:108px;border-width:3px;margin-bottom:22px;box-shadow:0 0 0 7px rgba(220,38,38,.12),0 0 38px rgba(220,38,38,.7);animation:flt 4s ease-in-out infinite}
-@keyframes flt{50%{transform:translateY(-6px)}}
-.login-title{font-size:16px;margin-bottom:12px}.login-sub{font-size:7px;margin-bottom:28px}
-.pixel-inp{border-radius:16px;border-color:#2a2a35;padding:16px 18px;font-size:9px}
-.pixel-btn{border-radius:16px;padding:17px;font-size:10px}
-#l-err{font-size:8px;line-height:1.8}
-#welcome-text{font-size:12px;line-height:2.8}
-.home-hero{background:linear-gradient(135deg,rgba(220,38,38,.12),rgba(124,58,237,.12));border-color:var(--border-red);text-align:center;padding:34px 20px}
-.hero-title{font-size:20px;color:#fff;text-shadow:0 0 18px #dc2626;letter-spacing:4px;margin-bottom:14px}
-.menu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
-.menu-card{cursor:pointer;border-radius:24px;padding:26px 20px;background:linear-gradient(145deg,rgba(220,38,38,.10),rgba(124,58,237,.10));border:1px solid var(--border);transition:all .2s}
-.menu-card:hover{transform:translateY(-4px);border-color:var(--red);box-shadow:0 12px 32px rgba(220,38,38,.25)}
-.menu-card .mi{display:block;font-size:30px;margin-bottom:16px}
-.menu-card b{display:block;font-size:10px;margin-bottom:10px;color:#fff}
-.menu-card span:last-child{display:block;font-size:8px;color:#9ca3af;line-height:2}
-</style>
 </head>
 <body>
 <canvas id="bg-canvas"></canvas>
@@ -226,16 +188,14 @@ label,p{line-height:1.9}
     </div>
 
     <nav id="nav">
-      <div class="nav-item active" data-tab="home"><span class="ni">🏠</span> เมนูหลัก</div>
-      <div class="nav-section">ส่วนตัว</div>
-      <div class="nav-item" data-tab="create"><span class="ni">🔑</span> สร้างคีย์</div>
-      <div class="nav-item" data-tab="keys"><span class="ni">📋</span> คีย์ของฉัน</div>
-      <div class="nav-item" data-tab="players"><span class="ni">👁️</span> ผู้เล่นออนไลน์</div>
+      <div class="nav-section">หลัก</div>
+      <div class="nav-item active" data-tab="create"><span class="ni">🔑</span> สร้างคีย์</div>
       <div class="nav-item" data-tab="announce"><span class="ni">📢</span> ประกาศ</div>
-      <div class="nav-item" data-tab="custlog"><span class="ni">🕑</span> ประวัติลูกค้า</div>
-      <div class="nav-section">ส่วนรวม</div>
-      <div class="nav-item" data-tab="shared"><span class="ni">🌐</span> คีย์ส่วนรวม</div>
+      <div class="nav-item" data-tab="players"><span class="ni">👁️</span> ผู้เล่นออนไลน์</div>
+      <div class="nav-item" data-tab="keys"><span class="ni">📋</span> คีย์ทั้งหมด</div>
+      <div class="nav-section">ทีม</div>
       <div class="nav-item" data-tab="chat"><span class="ni">💬</span> ห้องพูดคุย</div>
+      <div class="nav-item" data-tab="custlog"><span class="ni">🕑</span> ประวัติลูกค้า</div>
       <div id="owner-nav" style="display:none;">
         <div class="nav-section">Owner Only</div>
         <div class="nav-item" data-tab="admins"><span class="ni">👑</span> บัญชีแอดมิน</div>
@@ -271,23 +231,7 @@ label,p{line-height:1.9}
     <div id="content">
 
       <!-- สร้างคีย์ -->
-      <div class="tab-panel active" data-tab="home">
-        <div class="card home-hero"><div class="hero-title">NYVEXHUB</div><p id="home-hello">เลือกหมวดที่ต้องการได้เลย</p></div>
-        <div class="menu-grid">
-          <div class="menu-card " data-go="create"><span class="mi">🔑</span><b>สร้างคีย์</b><span>สร้างคีย์ใหม่ หรือเปิด Keyless Mode</span></div>
-          <div class="menu-card " data-go="keys"><span class="mi">📋</span><b>คีย์ของฉัน</b><span>คีย์ที่คุณสร้างเอง เห็นเฉพาะคุณ</span></div>
-          <div class="menu-card " data-go="players"><span class="mi">👁️</span><b>ผู้เล่นออนไลน์</b><span>ดูคนที่กำลังรันสคริปต์ของคุณ</span></div>
-          <div class="menu-card " data-go="announce"><span class="mi">📢</span><b>ประกาศ</b><span>ส่งข้อความขึ้นจอลูกค้า</span></div>
-          <div class="menu-card " data-go="custlog"><span class="mi">🕑</span><b>ประวัติลูกค้า</b><span>บันทึกคีย์และการแกะสคริปต์</span></div>
-          <div class="menu-card " data-go="shared"><span class="mi">🌐</span><b>คีย์ส่วนรวม</b><span>คีย์กลางที่ทุกแอดมินใช้ร่วมกัน</span></div>
-          <div class="menu-card " data-go="chat"><span class="mi">💬</span><b>ห้องพูดคุย</b><span>คุยกับทีม แนบรูปได้</span></div>
-          <div class="menu-card owner-card" data-go="admins"><span class="mi">👑</span><b>บัญชีแอดมิน</b><span>จัดการบัญชีทีม</span></div>
-          <div class="menu-card owner-card" data-go="syslog"><span class="mi">🔒</span><b>ประวัติระบบ</b><span>ดูทุกการกระทำในระบบ</span></div>
-        </div>
-      </div>
-
-      <!-- สร้างคีย์ -->
-      <div class="tab-panel" data-tab="create">
+      <div class="tab-panel active" data-tab="create">
         <div class="card">
           <div class="card-title grad-text">🔑 สร้างคีย์ใหม่</div>
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:12px;">
@@ -316,21 +260,20 @@ label,p{line-height:1.9}
           </div>
           <div style="margin-bottom:12px;">
             <label style="font-size:11px;color:#9ca3af;display:block;margin-bottom:6px;">สคริปต์หลัก (Lua) — เก็บบนเซิร์ฟเวอร์</label>
-            <textarea id="script" class="inp" rows="4" placeholder="print('NYVEXHUB Connected!')"></textarea>
+            <textarea id="script" class="inp" rows="4" placeholder="print('NVEX Connected!')"></textarea>
           </div>
           <div class="card card-purple" style="margin-bottom:12px;padding:14px;">
             <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:8px;">
               <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;"><input id="protect" type="checkbox" checked style="accent-color:var(--red);"> 🛡️ ป้องกัน 3 ชั้น + hook 4 จุด</label>
               <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;"><input id="kick" type="checkbox" checked style="accent-color:var(--red);"> 🚪 เตะออกเมื่อโดนจับ</label>
-              <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;"><input id="keyless" type="checkbox" style="accent-color:var(--red);"> 🔓 Keyless Mode (ไม่ต้องใช้คีย์)</label>
               <div style="display:flex;gap:6px;">
                 <input id="sound" class="inp" style="flex:1;" placeholder="Sound ID เสียงเตือน">
                 <button id="sound-test" class="btn btn-ghost btn-sm">🔊</button>
               </div>
             </div>
-            <p style="font-size:10px;color:#6b7280;">Keyless: ลูกค้าไม่ต้องกรอกคีย์ สคริปต์ยังถูกเข้ารหัสและเก็บบนเซิร์ฟเวอร์ ไม่จำกัดคนใช้ ไม่หมดอายุ<br>คนที่ hook/ดักสคริปต์ → บันทึก + ระงับคีย์อัตโนมัติ + เล่นเสียง + เตะออก</p>
+            <p style="font-size:10px;color:#6b7280;">คนที่ hook/ดักสคริปต์ → บันทึก + ระงับคีย์อัตโนมัติ + เล่นเสียง + เตะออก</p>
           </div>
-          <button id="gen" class="btn btn-red btn-full" style="padding:13px;font-size:14px;">🚀 เจนคีย์ NYVEXHUB</button>
+          <button id="gen" class="btn btn-red btn-full" style="padding:13px;font-size:14px;">🚀 เจนคีย์ NVEX</button>
         </div>
       </div>
 
@@ -367,7 +310,7 @@ label,p{line-height:1.9}
       <!-- คีย์ทั้งหมด -->
       <div class="tab-panel" data-tab="keys">
         <div class="card">
-          <div class="card-title grad-text">📋 คีย์ของฉัน (เห็นเฉพาะของคุณ)</div>
+          <div class="card-title grad-text">📋 คีย์ทั้งหมดในระบบ</div>
           <div class="tbl-wrap"><table class="tbl">
             <thead><tr>
               <th>Key Code</th><th>โปรเจกต์</th><th>อายุ</th><th>ผู้ใช้</th><th>สร้างโดย</th><th>จัดการ</th>
@@ -389,13 +332,9 @@ label,p{line-height:1.9}
           </div>
           <p id="chat-img-name" style="font-size:10px;color:#6b7280;margin-top:4px;"></p>
         </div>
-        </div>
-
-      <!-- คีย์ส่วนรวม -->
-      <div class="tab-panel" data-tab="shared">
         <div class="card card-yellow">
-          <div class="card-title" style="color:#facc15;">🌐 คีย์ส่วนรวม</div>
-          <p style="font-size:11px;color:#6b7280;margin-bottom:10px;">ทุกแอดมินเห็นและใช้ร่วมกันได้ คีย์ที่สร้างจากหน้าอื่นจะเป็นของคุณคนเดียว</p>
+          <div class="card-title" style="color:#facc15;">🔑 คีย์ส่วนรวมของห้องนี้</div>
+          <p style="font-size:11px;color:#6b7280;margin-bottom:10px;">คีย์ที่สร้างจากช่องนี้เท่านั้นที่นับเป็นคีย์ส่วนรวม</p>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
             <input id="room-name" class="inp" placeholder="ชื่อโปรเจกต์">
             <input id="room-maxuses" class="inp" type="number" value="1" placeholder="จำนวนคนใช้">
@@ -442,71 +381,73 @@ label,p{line-height:1.9}
 </div>
 
 <script>
-
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt = t => t ? new Date(t).toLocaleString('th-TH') : '-';
 let TOKEN = localStorage.getItem('nvex_token') || '';
-let _justLoggedIn = false;
 let ME = { username: '', role: '' };
 let DATA = { keys: [], now: Date.now(), onlineMs: 90000 };
 let chatImageData = null;
+let _justLoggedIn = false;
 
-const TABS = [
-  { id: 'create', label: '🔑 สร้างคีย์', ownerOnly: false },
-  { id: 'announce', label: '📢 ประกาศ', ownerOnly: false },
-  { id: 'players', label: '👁️ ผู้เล่นออนไลน์', ownerOnly: false },
-  { id: 'keys', label: '📋 คีย์ทั้งหมด', ownerOnly: false },
-  { id: 'custlog', label: '🕑 ประวัติลูกค้า', ownerOnly: false },
-  { id: 'chat', label: '💬 พูดคุย + คีย์ส่วนรวม', ownerOnly: false },
-  { id: 'admins', label: '👑 บัญชีแอดมิน', ownerOnly: true },
-  { id: 'syslog', label: '🔒 ประวัติระบบ', ownerOnly: true },
-];
-
-function buildTabs(isOwner) {
-  $('tabbar').innerHTML = TABS.filter(t => !t.ownerOnly || isOwner).map(t =>
-    `<button data-tab-btn="${t.id}" class="tab-btn px-4 py-2 rounded-xl text-sm font-bold bg-[#0c0c10] text-gray-400">${t.label}</button>`).join('');
-  document.querySelectorAll('.tab-btn').forEach(b => b.onclick = () => switchTab(b.dataset.tabBtn));
-  switchTab('home');
-}
-function switchTab(id) {
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('hidden', p.dataset.tab !== id));
-  document.querySelectorAll('.tab-btn').forEach(b => {
-    const active = b.dataset.tabBtn === id;
-    b.classList.toggle('bg-gradient-to-r', active); b.classList.toggle('from-purple-600', active); b.classList.toggle('to-indigo-600', active);
-    b.classList.toggle('text-white', active); b.classList.toggle('bg-[#0c0c10]', !active); b.classList.toggle('text-gray-400', !active);
-  });
-  window.scrollTo(0, 0);
-  if (window.__chatPoll) { clearInterval(window.__chatPoll); window.__chatPoll = null; }
-  if (id === 'custlog') refreshCustLog();
-  if (id === 'admins') refreshUsers();
-  if (id === 'syslog') refreshAudit();
-  if (id === 'chat') { refreshChat(); window.__chatPoll = setInterval(refreshChat, 4000); }
-}
-
+// ── API helper ──────────────────────────────────────────────────
 async function api(p, body) {
   const r = await fetch('/api/admin/' + p, {
     method: body ? 'POST' : 'GET',
     headers: { 'x-session-token': TOKEN, 'content-type': 'application/json' },
     body: body ? JSON.stringify(body) : undefined
-  });
+  }).catch(() => ({ json: () => ({}) }));
   if (r.status === 401) { doLogout(false); return {}; }
-  return r.json();
+  return r.json().catch(() => ({}));
 }
 
-function showApp() { $('login-screen').classList.add('hidden'); $('app').classList.remove('hidden'); }
-function showLogin(msg) { $('app').classList.add('hidden'); $('login-screen').classList.remove('hidden'); if (msg !== undefined) $('l-err').textContent = msg; }
-
-function doLogout(callServer) {
-  if (callServer) fetch('/api/auth/logout', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ token: TOKEN }) }).catch(() => {});
-  TOKEN = ''; localStorage.removeItem('nvex_token'); showLogin('');
+// ── Screen helpers ──────────────────────────────────────────────
+function showApp()  { $('login-screen').style.display='none'; $('layout').style.display='flex'; }
+function showLogin(msg) {
+  $('layout').style.display='none';
+  $('login-screen').style.display='flex';
+  if (msg !== undefined) $('l-err').textContent = msg;
 }
 
+// ── Navigation ──────────────────────────────────────────────────
+function buildTabs(isOwner) {
+  $('owner-nav').style.display = isOwner ? 'block' : 'none';
+  document.querySelectorAll('.nav-item[data-tab]').forEach(b => {
+    b.onclick = () => {
+      switchTab(b.dataset.tab);
+      document.getElementById('sidebar').classList.remove('open');
+      document.getElementById('sidebar-overlay').classList.remove('show');
+    };
+  });
+  switchTab('create');
+}
+
+function switchTab(id) {
+  document.querySelectorAll('.tab-panel').forEach(p => {
+    const on = p.dataset.tab === id;
+    p.style.display = on ? 'block' : 'none';
+  });
+  document.querySelectorAll('.nav-item[data-tab]').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab === id);
+  });
+  if (window.__chatPoll) { clearInterval(window.__chatPoll); window.__chatPoll = null; }
+  if (id === 'custlog') refreshCustLog();
+  if (id === 'admins')  refreshUsers();
+  if (id === 'syslog')  refreshAudit();
+  if (id === 'chat')    { refreshChat(); window.__chatPoll = setInterval(refreshChat, 4000); }
+}
+
+// ── Login / Logout ──────────────────────────────────────────────
 $('l-btn').onclick = async () => {
   $('l-err').textContent = '';
   const username = $('l-user').value.trim(), password = $('l-pass').value;
   if (!username || !password) return $('l-err').textContent = 'กรอกให้ครบ';
-  const r = await fetch('/api/auth/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ username, password }) }).then(x => x.json());
+  $('l-btn').textContent = '[ ... ]';
+  const r = await fetch('/api/auth/login', {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ username, password })
+  }).then(x => x.json()).catch(() => ({ ok: false, msg: 'Connection error' }));
+  $('l-btn').textContent = '[ ENTER ]';
   if (!r.ok) return $('l-err').textContent = r.msg || 'เข้าสู่ระบบไม่สำเร็จ';
   TOKEN = r.token; localStorage.setItem('nvex_token', TOKEN);
   ME = { username: r.username, role: r.role };
@@ -515,63 +456,178 @@ $('l-btn').onclick = async () => {
 };
 $('logout-btn').onclick = () => doLogout(true);
 
+function doLogout(callServer) {
+  if (callServer) fetch('/api/auth/logout', {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ token: TOKEN })
+  }).catch(() => {});
+  TOKEN = ''; localStorage.removeItem('nvex_token'); showLogin('');
+}
+
 function afterLogin() {
   $('me-name').textContent = ME.username;
-  $('me-role').textContent = ME.role === 'owner' ? 'เจ้าของระบบ' : 'แอดมิน';
-  const isOwner = ME.role === 'owner';
-  buildTabs(isOwner);
+  $('me-role').textContent = ME.role === 'owner' ? '👑 เจ้าของระบบ' : '🛡️ แอดมิน';
+  $('user-avatar-letter').textContent = (ME.username[0] || '?').toUpperCase();
+  buildTabs(ME.role === 'owner');
   showApp();
-  if (_justLoggedIn) { _justLoggedIn = false; if(typeof showWelcome==='function') showWelcome(ME.username); }
+  if (_justLoggedIn) { _justLoggedIn = false; showWelcome(ME.username); }
   refresh();
   if (window.__poll) clearInterval(window.__poll);
   window.__poll = setInterval(refresh, 5000);
 }
 
-// ---------- บัญชีแอดมิน (owner) ----------
+// ── Hamburger (mobile) ──────────────────────────────────────────
+document.getElementById('hamburger').onclick = () => {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('show');
+};
+document.getElementById('sidebar-overlay').onclick = () => {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('show');
+};
+
+// ── Admin Users (owner only) ────────────────────────────────────
 async function refreshUsers() {
   const r = await api('users/list');
   if (!r.ok) return;
-  $('u-list').innerHTML = r.users.map(u => `<tr class="border-b border-gray-800/50">
-    <td class="py-2 px-2 font-bold">${esc(u.username)}</td>
-    <td class="px-2">${u.role === 'owner' ? '👑 เจ้าของระบบ' : 'แอดมิน'}</td>
-    <td class="px-2 text-gray-400">${fmt(u.createdAt)}</td>
-    <td class="px-2 text-center">${u.role === 'owner' ? '-' : `<button data-u="${esc(u.username)}" class="u-del bg-red-700 px-2 py-1 text-xs rounded-lg">ลบ</button>`}</td></tr>`).join('') || '<tr><td colspan="4" class="py-3 text-center text-gray-500">ยังไม่มีบัญชีแอดมินเพิ่มเติม</td></tr>';
+  $('u-list').innerHTML = r.users.map(u => `<tr>
+    <td style="font-weight:600;">${esc(u.username)}</td>
+    <td>${u.role==='owner'?'<span class="badge badge-red">👑 เจ้าของ</span>':'<span class="badge badge-purple">🛡️ แอดมิน</span>'}</td>
+    <td style="color:#6b7280;font-size:11px;">${fmt(u.createdAt)}</td>
+    <td>${u.role==='owner'?'-':`<button data-u="${esc(u.username)}" class="btn btn-sm u-del" style="background:rgba(220,38,38,0.15);color:#f87171;border:1px solid var(--border-red);">ลบ</button>`}</td>
+  </tr>`).join('') || '<tr><td colspan="4" style="text-align:center;color:#4b5563;padding:20px;">ยังไม่มีบัญชีแอดมิน</td></tr>';
   document.querySelectorAll('.u-del').forEach(b => b.onclick = async () => {
-    if (!confirm('ลบบัญชี ' + b.dataset.u + ' ?')) return;
+    if (!confirm('ลบบัญชี '+b.dataset.u+' ?')) return;
     await api('users/delete', { username: b.dataset.u }); refreshUsers();
   });
 }
 $('u-create').onclick = async () => {
-  const username = $('u-name').value.trim(), password = $('u-pass').value;
-  const r = await api('users/create', { username, password });
+  const r = await api('users/create', { username: $('u-name').value.trim(), password: $('u-pass').value });
   if (!r.ok) return alert(r.msg || 'ผิดพลาด');
-  $('u-name').value = ''; $('u-pass').value = ''; alert('สร้างบัญชีแอดมินสำเร็จ'); refreshUsers();
+  $('u-name').value = ''; $('u-pass').value = '';
+  alert('สร้างบัญชีแอดมินสำเร็จ'); refreshUsers();
 };
 
-// ---------- ประวัติลูกค้า (ทุกคน) กับ ประวัติระบบ (owner) ----------
-async function refreshCustLog() {
-  const r = await api('logs');
-  if (!r.ok) return;
-  $('cust-log-list').innerHTML = r.logs.map(l => `<tr class="border-b border-gray-800/40">
-    <td class="py-1.5 px-2 text-gray-400">${fmt(l.t)}</td><td class="px-2 font-bold">${esc(l.user)}</td>
-    <td class="px-2 text-purple-300">${esc(l.action)}</td><td class="px-2 text-gray-400">${esc(l.detail)}</td></tr>`).join('') || '<tr><td colspan="4" class="py-3 text-center text-gray-500">ยังไม่มีประวัติ</td></tr>';
+// ── Logs ────────────────────────────────────────────────────────
+const LOG_COLORS = {create_key:'badge-green',delete_key:'badge-red',ban_key:'badge-red',unban_key:'badge-yellow',reset_key:'badge-yellow',tamper_detected:'badge-red',announcement:'badge-purple',customer_reply:'badge-indigo'};
+function logRows(logs) {
+  return logs.map(l=>`<tr>
+    <td style="color:#6b7280;font-size:10px;white-space:nowrap;">${fmt(l.t)}</td>
+    <td style="font-weight:600;">${esc(l.user)}</td>
+    <td><span class="badge ${LOG_COLORS[l.action]||'badge-gray'}">${esc(l.action)}</span></td>
+    <td style="color:#9ca3af;font-size:11px;">${esc(l.detail)}</td>
+  </tr>`).join('') || '<tr><td colspan="4" style="text-align:center;color:#4b5563;padding:20px;">ยังไม่มีประวัติ</td></tr>';
 }
-async function refreshAudit() {
-  const r = await api('audit');
-  if (!r.ok) return;
-  $('audit-list').innerHTML = r.logs.map(l => `<tr class="border-b border-gray-800/40">
-    <td class="py-1.5 px-2 text-gray-400">${fmt(l.t)}</td><td class="px-2 font-bold">${esc(l.user)}</td>
-    <td class="px-2 text-purple-300">${esc(l.action)}</td><td class="px-2 text-gray-400">${esc(l.detail)}</td></tr>`).join('') || '<tr><td colspan="4" class="py-3 text-center text-gray-500">ยังไม่มีประวัติ</td></tr>';
-}
+async function refreshCustLog() { const r=await api('logs');   if(r.ok) $('cust-log-list').innerHTML=logRows(r.logs); }
+async function refreshAudit()   { const r=await api('audit');  if(r.ok) $('audit-list').innerHTML=logRows(r.logs); }
 
-// ---------- แชททีม ----------
+// ── Chat ────────────────────────────────────────────────────────
 async function refreshChat() {
   const r = await api('chat/list');
   if (!r.ok) return;
-  $('chat-box').innerHTML = r.messages.map(m => {
+  const box = $('chat-box');
+  box.innerHTML = r.messages.map(m => {
     const mine = m.user === ME.username;
-    const readers = (m.readBy || []).filter(u => u !== m.user);
-    return `<div class="flex flex-col ${mine ? 'items-end' : 'items-start'}">
-      <div class="text-[10px] text-gray-500 mb-0.5">${esc(m.user)} • ${fmt(m.t)}</div>
-      <div class="max-w-[80%] ${mine ? 'bg-indigo-700' : 'bg-[#1c1c28]'} rounded-xl px-3 py-2 text-sm">
-        ${m.text ? `<div>${esc(m.text)
+    const readers = (m.readBy||[]).filter(u=>u!==m.user);
+    return `<div class="chat-msg ${mine?'mine':'other'}">
+      <div class="chat-meta">${esc(m.user)} · ${fmt(m.t)}</div>
+      <div class="chat-bubble">
+        ${m.text?`<div>${esc(m.text)}</div>`:''}
+        ${m.image?`<img src="${m.image}" style="max-height:160px;border-radius:8px;margin-top:6px;">`:''}
+      </div>
+      ${readers.length?`<div style="font-size:10px;color:#4b5563;margin-top:2px;">✅ ${readers.map(esc).join(', ')}</div>`:''}
+    </div>`;
+  }).join('') || '<div style="text-align:center;color:#4b5563;font-size:12px;padding:40px 0;">ยังไม่มีข้อความ</div>';
+  box.scrollTop = box.scrollHeight;
+  refreshRoomKeys();
+}
+$('chat-img').onchange = () => {
+  const file = $('chat-img').files[0];
+  if (!file) { chatImageData=null; $('chat-img-name').textContent=''; return; }
+  if (file.size>300000) { alert('รูปใหญ่เกินไป'); $('chat-img').value=''; return; }
+  const reader = new FileReader();
+  reader.onload = () => { chatImageData=reader.result; $('chat-img-name').textContent='📎 '+file.name; };
+  reader.readAsDataURL(file);
+};
+$('chat-send').onclick = async () => {
+  const text = $('chat-text').value.trim();
+  if (!text && !chatImageData) return;
+  const r = await api('chat/send', { text, image: chatImageData });
+  if (!r.ok) return alert(r.msg||'ส่งไม่สำเร็จ');
+  $('chat-text').value=''; chatImageData=null; $('chat-img').value=''; $('chat-img-name').textContent='';
+  refreshChat();
+};
+
+// ── Room keys ───────────────────────────────────────────────────
+function refreshRoomKeys() {
+  const roomKeys = (DATA.keys||[]).filter(k=>k.room);
+  $('room-keys').innerHTML = roomKeys.length
+    ? roomKeys.map(k=>`<tr>
+        <td style="font-family:monospace;color:#facc15;font-size:11px;">${esc(k.key)}</td>
+        <td style="color:#a78bfa;">${esc(k.name)}</td>
+        <td style="color:#6b7280;font-size:11px;">${esc(k.createdBy||'-')}</td>
+        <td style="text-align:center;">${Object.keys(k.users||{}).length}/${k.maxUses}</td>
+      </tr>`).join('')
+    : '<tr><td colspan="4" style="text-align:center;color:#4b5563;padding:16px;">ยังไม่มีคีย์ส่วนรวม</td></tr>';
+}
+$('room-gen').onclick = async () => {
+  const script=$('room-script').value.trim();
+  if(!script) return alert('วางสคริปต์ก่อน');
+  const r=await api('create',{maxUses:$('room-maxuses').value,durationDays:'30',count:'1',name:$('room-name').value||'คีย์ส่วนรวม',script:protect(script,{sound:'',kick:true}),room:true});
+  if(!r.ok) return alert(r.msg||'ผิดพลาด');
+  alert('🎉 '+r.keys.join('\n')); $('room-script').value=''; $('room-name').value=''; refresh();
+};
+
+// ── Announcement (cooldown for non-owner) ───────────────────────
+let annBurst=0, annCooldownUntil=0, annCooldownTimer=null;
+$('announce-btn').onclick = async () => {
+  const isOwner = ME.role==='owner';
+  if (!isOwner) {
+    if (Date.now()<annCooldownUntil) {
+      const s=Math.ceil((annCooldownUntil-Date.now())/1000);
+      $('ann-cooldown-txt').textContent=`⏳ รอ ${s} วิ`;
+      return;
+    }
+    annBurst++;
+    if (annBurst>=3) {
+      annCooldownUntil=Date.now()+10000; annBurst=0;
+      const bar=$('ann-cooldown-bar'); bar.style.display='block';
+      const fill=$('ann-cooldown-fill'); let start=Date.now();
+      if(annCooldownTimer) clearInterval(annCooldownTimer);
+      annCooldownTimer=setInterval(()=>{
+        const e=Date.now()-start, pct=Math.max(0,100-(e/10000)*100);
+        fill.style.width=pct+'%';
+        const rem=Math.ceil((annCooldownUntil-Date.now())/1000);
+        $('ann-cooldown-txt').textContent=rem>0?`⏳ คูลดาวน์ ${rem} วิ`:'';
+        if(e>=10000){clearInterval(annCooldownTimer);bar.style.display='none';$('ann-cooldown-txt').textContent='';}
+      },100);
+    }
+  }
+  const text=$('announcement-text').value.trim();
+  if(!text) return $('ann-cooldown-txt').textContent='พิมพ์ข้อความก่อน';
+  const r=await api('announce',{text,sound:$('ann-sound-on').checked?$('ann-sound-id').value:'',allowReply:$('ann-reply-on').checked});
+  if(!r.ok) return $('ann-cooldown-txt').textContent=r.msg||'ส่งไม่สำเร็จ';
+  $('announcement-text').value='';
+  $('ann-cooldown-txt').textContent='✅ ส่งแล้ว';
+  setTimeout(()=>{ if($('ann-cooldown-txt')) $('ann-cooldown-txt').textContent=''; },2500);
+};
+
+// ── Sound test ──────────────────────────────────────────────────
+$('sound-test').onclick = () => {
+  const id=$('sound').value.replace(/\D/g,'');
+  if(!id) return alert('ใส่ Sound ID ก่อน');
+  window.open('https://www.roblox.com/library/'+id,'_blank');
+};
+
+// ── 3-layer OBF protect ─────────────────────────────────────────
+const rn=()=>'_'+Math.random().toString(36).slice(2,8);
+const rk=()=>Array.from({length:12},()=>1+Math.floor(Math.random()*254));
+const enc=(txt,k)=>{const b=new TextEncoder().encode(txt);let o='';for(let i=0;i<b.length;i++)o+='\\'+String(b[i]^k[i%k.length]).padStart(3,'0');return o;};
+function protect(src,o){
+  const[T,C,X,D]=Array.from({length:10},rn);
+  const keys=Array.from({length:3},rk);
+  const snd=o.sound?`pcall(function() local s=Instance.new("Sound",workspace) s.SoundId="rbxassetid://${o.sound}" s.Volume=10 s.Looped=true s:Play() end)`:'';
+  const kick=o.kick?`pcall(function() game:GetService("Players").LocalPlayer:Kick("Tampering detected") end)`:'';
+  const junk=()=>`local ${rn()}=0 for ${rn()}=1,3 do end`;
+  let layer=`local ${T},${C},${X}=...\n${C}()\n${junk()}\n${src}`;
+  for(let i=1;i>=0;i--){const k=keys[i];
