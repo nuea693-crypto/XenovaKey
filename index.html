@@ -630,4 +630,240 @@ function protect(src,o){
   const kick=o.kick?`pcall(function() game:GetService("Players").LocalPlayer:Kick("Tampering detected") end)`:'';
   const junk=()=>`local ${rn()}=0 for ${rn()}=1,3 do end`;
   let layer=`local ${T},${C},${X}=...\n${C}()\n${junk()}\n${src}`;
-  for(let i=1;i>=0;i--){const k=keys[i];
+  for(let i=1;i>=0;i--){const k=keys[i];layer=`local ${T},${C},${X},${D}=...\n${C}()\n${junk()}\nlocal f=loadstring(${D}("${enc(layer,k)}",{${k}}))\n${C}()\nif f then f(${T},${C},${X},${D}) end`;}
+  return `local ${X}=__X
+local function ${D}(s,k) local b=(bit32 or bit).bxor local o={} for i=1,#s do o[i]=string.char(b(s:byte(i),k[(i-1)%#k+1])) end return table.concat(o) end
+local function ${T}(why)
+  warn("[NVEX SECURITY] ตรวจพบการแกะสคริปต์ — บันทึกแล้ว คีย์ถูกระงับทันที")
+  pcall(function()
+    if ${X} then
+      local rq=(syn and syn.request) or (http and http.request) or http_request or request
+      rq({Url=${X}.b.."/api/trap",Method="POST",Headers={["Content-Type"]="application/json"},Body=game:GetService("HttpService"):JSONEncode({key=${X}.k,hwid=${X}.h,username=game:GetService("Players").LocalPlayer.Name,reason=why})})
+    end
+  end)
+  ${snd}
+  task.wait(4)
+  ${kick}
+  while true do task.wait(1e3) end
+end
+local function ${C}()
+  local bad=false
+  pcall(function() if iscclosure and not iscclosure(loadstring) then bad=true end end)
+  pcall(function() if checkcaller and not checkcaller() then bad=true end end)
+  if bad then ${T}("hook") end
+end
+${C}()
+local f=loadstring(${D}("${enc(layer,keys[2])}",{${keys[2]}}))
+${C}()
+if f then f(${T},${C},${X},${D}) end
+`;}
+
+// ── Util ────────────────────────────────────────────────────────
+function durLabel(d){
+  if(!d) return 'ถาวร';
+  return({30:'1 เดือน',60:'2 เดือน',90:'3 เดือน',120:'4 เดือน',150:'5 เดือน',365:'1 ปี'})[d]||d+' วัน';
+}
+
+// ── Render ──────────────────────────────────────────────────────
+function render(){
+  const{keys,now,onlineMs}=DATA;
+  const rows=[];
+  keys.forEach(k=>Object.entries(k.users||{}).forEach(([h,u])=>rows.push({k,h,u})));
+  rows.sort((a,b)=>b.u.lastSeen-a.u.lastSeen);
+  $('st-online').textContent=rows.filter(r=>now-r.u.lastSeen<onlineMs).length;
+  $('st-keys').textContent=keys.length;
+
+  $('players').innerHTML=rows.length?rows.map(({k,h,u})=>{
+    const on=now-u.lastSeen<onlineMs;
+    return `<tr>
+      <td>${on?'<span class="badge badge-green pulse">● ออนไลน์</span>':'<span class="badge badge-gray">● ออฟไลน์</span>'}</td>
+      <td style="font-weight:600;">${esc(u.username)}</td>
+      <td style="color:#6b7280;">${esc(u.userId)}</td>
+      <td style="color:#6b7280;">${esc(u.placeId)}</td>
+      <td style="color:#4b5563;font-size:10px;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(u.jobId)}">${esc(u.jobId)}</td>
+      <td><span style="font-family:monospace;color:#facc15;font-size:11px;">${esc(k.key)}</span></td>
+      <td style="color:#6b7280;font-size:11px;">${fmt(u.lastSeen)}</td>
+      <td style="white-space:nowrap;">
+        <button data-p="${esc(u.placeId)}" data-j="${esc(u.jobId)}" data-k="${esc(k.key)}" class="btn btn-purple btn-sm warp-join-btn" style="margin-right:4px;">🚀 จอยเลย</button>
+        <button data-p="${esc(u.placeId)}" data-j="${esc(u.jobId)}" class="btn btn-ghost btn-sm warp-copy-btn">📋</button>
+      </td>
+    </tr>`;
+  }).join(''):'<tr><td colspan="8" style="text-align:center;color:#4b5563;padding:24px;">ยังไม่มีใครรันสคริปต์</td></tr>';
+
+  document.querySelectorAll('.warp-join-btn').forEach(b=>b.onclick=async()=>{
+    window.location.href=`roblox://experiences/start?placeId=${b.dataset.p}&gameInstanceId=${b.dataset.j}`;
+    if(b.dataset.k) await api('notify-key',{key:b.dataset.k});
+  });
+  document.querySelectorAll('.warp-copy-btn').forEach(b=>b.onclick=async()=>{
+    await navigator.clipboard.writeText(`game:GetService("TeleportService"):TeleportToPlaceInstance(${b.dataset.p},"${b.dataset.j}",game.Players.LocalPlayer)`);
+    alert('คัดลอกสคริปต์วาร์ปสำรองแล้ว');
+  });
+
+  $('keys').innerHTML=keys.length?keys.map(k=>{
+    const expired=k.expiresAt&&now>k.expiresAt;
+    const st=k.banned?'<span class="badge badge-red">ระงับ</span>':expired?'<span class="badge badge-red">หมดอายุ</span>':'<span class="badge badge-green">ใช้งานได้</span>';
+    const tamper=(k.tamper||[]).length?`<span class="badge badge-red" title="${esc(k.tamper.map(t=>t.username+' '+t.reason).join(', '))}">🚨${k.tamper.length}</span>`:'';
+    const roomBadge=k.room?'<span class="badge badge-indigo">ส่วนรวม</span>':'';
+    return `<tr data-k="${esc(k.key)}">
+      <td><span style="font-family:monospace;color:#facc15;font-size:11px;">${esc(k.key)}</span> ${st} ${tamper} ${roomBadge}</td>
+      <td style="color:#a78bfa;">${esc(k.name)}</td>
+      <td style="font-size:11px;color:#9ca3af;">${durLabel(k.durationDays)}<br><span style="color:#4b5563;">${k.activatedAt?(k.expiresAt?fmt(k.expiresAt):'ตลอดชีพ'):'ยังไม่เริ่มใช้'}</span></td>
+      <td style="text-align:center;font-weight:700;color:#4ade80;">${Object.keys(k.users||{}).length}/${k.maxUses}</td>
+      <td style="font-size:11px;color:#6b7280;">${esc(k.createdBy||'-')}</td>
+      <td style="white-space:nowrap;">
+        <button data-a="copy"  class="btn btn-ghost btn-sm" style="margin-right:3px;">📋 โค้ด</button>
+        <button data-a="reset" class="btn btn-ghost btn-sm" style="margin-right:3px;">รีเซ็ต</button>
+        <button data-a="ban"   class="btn btn-sm" style="background:rgba(234,179,8,0.15);color:#facc15;border:1px solid rgba(234,179,8,0.2);margin-right:3px;">${k.banned?'ปลด':'ระงับ'}</button>
+        <button data-a="delete" class="btn btn-sm" style="background:rgba(220,38,38,0.15);color:#f87171;border:1px solid var(--border-red);">ลบ</button>
+      </td>
+    </tr>`;
+  }).join(''):'<tr><td colspan="6" style="text-align:center;color:#4b5563;padding:24px;">ยังไม่มีคีย์ในระบบ</td></tr>';
+}
+
+async function refresh(){
+  const r=await api('list');
+  if(r.ok){DATA=r;render();}
+}
+
+// ── Key management clicks ────────────────────────────────────────
+$('keys').addEventListener('click', async e=>{
+  const a=e.target.dataset.a; if(!a) return;
+  const key=e.target.closest('tr').dataset.k;
+  if(a==='copy'){
+    const code=`getgenv().Key = "${key}"\nloadstring(game:HttpGet("${location.origin}/api/loader"))()`;
+    await navigator.clipboard.writeText(code); return alert('คัดลอกโค้ดให้ลูกค้าแล้ว');
+  }
+  if(a==='delete'&&!confirm('ลบคีย์นี้?')) return;
+  if(a==='reset'&&!confirm('ล้างรายชื่อผู้ใช้?')) return;
+  await api(a,{key}); refresh();
+});
+
+// ── Gen key ─────────────────────────────────────────────────────
+$('gen').onclick = async()=>{
+  const raw=$('script').value;
+  const final=$('protect').checked&&raw.trim()?protect(raw,{sound:$('sound').value.replace(/\D/g,''),kick:$('kick').checked}):raw;
+  const r=await api('create',{maxUses:$('max-uses').value,durationDays:$('duration').value,count:$('count').value,name:$('name').value,script:final});
+  if(!r.ok) return alert(r.msg||'ผิดพลาด');
+  alert('🎉 สร้างคีย์สำเร็จ:\n'+r.keys.join('\n'));
+  refresh();
+};
+
+// ══════════════════════════════════════════════════════════════════
+//  BACKGROUND: RED LIGHTNING  (behind everything, never blocking)
+// ══════════════════════════════════════════════════════════════════
+(function initLightning(){
+  const cvs=document.getElementById('bg-canvas');
+  if(!cvs) return;
+  const ctx=cvs.getContext('2d');
+  function resize(){cvs.width=window.innerWidth;cvs.height=window.innerHeight;}
+  resize(); window.addEventListener('resize',resize);
+
+  // Sparse floating sparks
+  function mkSparks(){
+    return Array.from({length:55},()=>({
+      x:Math.random()*cvs.width, y:Math.random()*cvs.height,
+      vx:(Math.random()-.5)*.3, vy:(Math.random()-.5)*.3,
+      r:Math.random()*1.4+.2,
+      a:Math.random()*.2+.04,
+      c:Math.random()<.7?'#ef4444':'#a855f7'
+    }));
+  }
+  let sparks=mkSparks();
+  window.addEventListener('resize',()=>{sparks=mkSparks();});
+
+  // Midpoint displacement bolt
+  function mkBolt(x1,y1,x2,y2,sp,d){
+    if(d<=0) return [[x1,y1],[x2,y2]];
+    const mx=(x1+x2)/2+(Math.random()-.5)*sp;
+    const my=(y1+y2)/2+(Math.random()-.5)*sp;
+    return [...mkBolt(x1,y1,mx,my,sp/2,d-1),...mkBolt(mx,my,x2,y2,sp/2,d-1)];
+  }
+
+  let bolts=[],fr=0,nxt=80;
+  function spawnBolt(){
+    const sx=Math.random()*cvs.width;
+    const ex=sx+(Math.random()-.5)*280;
+    const ey=cvs.height*(0.2+Math.random()*.55);
+    const bright=Math.random()<.55;
+    const col=Math.random()<.75?'#ef4444':'#a855f7';
+    bolts.push({pts:mkBolt(sx,0,ex,ey,95,6),a:bright?.8:.45,da:bright?.04:.028,w:bright?1.4:.9,c:col,gl:bright?10:5});
+    // branch
+    if(Math.random()<.35){
+      const pts=bolts[bolts.length-1].pts;
+      const bi=Math.floor(pts.length*(0.3+Math.random()*.4));
+      const bp=pts[bi];
+      bolts.push({pts:mkBolt(bp[0],bp[1],bp[0]+(Math.random()-.5)*120,bp[1]+Math.random()*cvs.height*.2,45,4),a:.35,da:.06,w:.7,c:'#f472b6',gl:4});
+    }
+  }
+
+  function loop(){
+    ctx.clearRect(0,0,cvs.width,cvs.height);
+    // sparks
+    ctx.save();
+    sparks.forEach(p=>{
+      p.x+=p.vx;p.y+=p.vy;
+      if(p.x<0)p.x=cvs.width;if(p.x>cvs.width)p.x=0;
+      if(p.y<0)p.y=cvs.height;if(p.y>cvs.height)p.y=0;
+      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle=p.c;ctx.globalAlpha=p.a*.6;ctx.fill();
+    });
+    ctx.restore();
+    // spawn
+    fr++;
+    if(fr>=nxt){spawnBolt();nxt=fr+60+Math.floor(Math.random()*90);}
+    // draw bolts
+    bolts=bolts.filter(b=>b.a>0.01);
+    ctx.save();
+    bolts.forEach(b=>{
+      ctx.beginPath();
+      b.pts.forEach((p,i)=>i===0?ctx.moveTo(p[0],p[1]):ctx.lineTo(p[0],p[1]));
+      ctx.strokeStyle=b.c;ctx.lineWidth=b.w;
+      ctx.shadowBlur=b.gl;ctx.shadowColor=b.c;
+      ctx.globalAlpha=b.a*.8;ctx.stroke();
+      b.a-=b.da;
+    });
+    ctx.restore();
+    requestAnimationFrame(loop);
+  }
+  loop();
+})();
+
+// ══════════════════════════════════════════════════════════════════
+//  TYPEWRITER WELCOME
+// ══════════════════════════════════════════════════════════════════
+function showWelcome(username){
+  const ov=document.getElementById('welcome-overlay');
+  const tx=document.getElementById('welcome-text');
+  if(!ov||!tx) return;
+  ov.style.display='flex';
+  tx.innerHTML='<span class="wcursor"></span>';
+  const cur=tx.querySelector('.wcursor');
+  const msg='สวัสดี '+username+'\nยินดีต้อนรับสู่\nไวลิสสุดโหดของ\nNYVEXHUB';
+  let i=0;
+  function next(){
+    if(i>=msg.length){
+      setTimeout(()=>{
+        ov.style.transition='opacity .9s';ov.style.opacity='0';
+        setTimeout(()=>{ov.style.display='none';ov.style.opacity='1';ov.style.transition='';},900);
+      },1800);return;
+    }
+    const ch=msg[i++];
+    if(ch==='\n') tx.insertBefore(document.createElement('br'),cur);
+    else tx.insertBefore(document.createTextNode(ch),cur);
+    setTimeout(next,ch.codePointAt(0)>127?65:40);
+  }
+  setTimeout(next,400);
+}
+
+// ── Boot ────────────────────────────────────────────────────────
+if(TOKEN){
+  api('list').then(r=>{
+    if(r.ok){ME=r.me;afterLogin();}
+    else showLogin('');
+  });
+} else {
+  showLogin('');
+}
+</script>
+</body>
+</html>
